@@ -92,7 +92,7 @@ def select_model(selected_model):
         __returned_queue = queue.Queue()
         if selected_model == 5:
             __ft_pre_trained = True
-            thread = threading.Thread(target=ft.create_model_fasttext_fb, args=__returned_queue)
+            thread = threading.Thread(target=ft.create_model_fasttext_fb, args=(__fasttext, __returned_queue))
             thread.start()
         else:
             __ft_pre_trained = False
@@ -112,3 +112,5 @@ def select_model(selected_model):
                                                                        __returned_queue))
         thread.start()
 
+
+    
