@@ -40,19 +40,20 @@ def load_model(documents, model_name, queue):
 
 
 def print_res_doc2vec(token_strings, documents, titles, IDs, modelDoC, most_similar, prefIDs):
+    recommend_movies = []
     cos_sim_s = []
     if modelDoC is None:
         modelDoC = load_model(documents, "Models/Doc2Vec/doc2vec_model", None)
     if most_similar:
-        querys = list()
+        queries = list()
         try:
             for string in token_strings:
                 new_sentence_vectorized = modelDoC.infer_vector(string, steps=100)
-                querys.append(new_sentence_vectorized)
+                queries.append(new_sentence_vectorized)
         except Exception:
             new_sentence_vectorized = modelDoC.infer_vector(token_strings, steps=100)
-            querys.append(new_sentence_vectorized)
-        query = np.asarray(querys).mean(axis=0)
+            queries.append(new_sentence_vectorized)
+        query = np.asarray(queries).mean(axis=0)
         similar_sentences = modelDoC.docvecs.most_similar([query], topn=5+len(token_strings))
         outputD2V_MS = []
         rank = 1
@@ -64,16 +65,17 @@ def print_res_doc2vec(token_strings, documents, titles, IDs, modelDoC, most_simi
                 if IDs[index] in prefIDs:
                     continue
             outputD2V_MS.append([rank, titles[index], v[1]])
+            recommend_movies.append({"Rank":rank, "ID": IDs[index]})
             rank += 1
-        print("--------------D2V-most_similar--------------")
-        df = pd.DataFrame(outputD2V_MS, columns=["rank", "title", "cosine_similarity"])
-        pd.set_option("display.max_rows", None, "display.max_columns", None)
-        print(df)
+        # print("--------------D2V-most_similar--------------")
+        # df = pd.DataFrame(outputD2V_MS, columns=["rank", "title", "cosine_similarity"])
+        # pd.set_option("display.max_rows", None, "display.max_columns", None)
+        # print(df)
     else:
-        querys = list()
+        queries = list()
         for string in token_strings:
-            querys.append(calculate_centroid(string, modelDoC))
-        query = np.asarray(querys).mean(axis=0)
+            queries.append(calculate_centroid(string, modelDoC))
+        query = np.asarray(queries).mean(axis=0)
         for i, doc in enumerate(documents):
             films_found = calculate_centroid(doc, modelDoC)
             if len(films_found) == 0:
@@ -94,8 +96,10 @@ def print_res_doc2vec(token_strings, documents, titles, IDs, modelDoC, most_simi
                 if IDs[i] in prefIDs:
                     continue
             outputD2VCent.append([rank, titles[i], cos_sim_s[i]])
+            recommend_movies.append({"Rank": rank, "ID": IDs[i]})
             rank += 1
-        print("--------------D2V-Centroid--------------")
-        df = pd.DataFrame(outputD2VCent, columns=["rank", "title", "cosine_similarity"])
-        pd.set_option("display.max_rows", None, "display.max_columns", None)
-        print(df)
+        # print("--------------D2V-Centroid--------------")
+        # df = pd.DataFrame(outputD2VCent, columns=["rank", "title", "cosine_similarity"])
+        # pd.set_option("display.max_rows", None, "display.max_columns", None)
+        # print(df)
+    return recommend_movies

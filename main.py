@@ -9,11 +9,13 @@ import Models.Word2Vec.Word2Vec as w2v
 import Models.FastText.FastText as ft
 import Models.TFIDF.TFIDF as tfidf
 
+ERROR_FILM_NOT_FOUND = 401
+
 global __doc2vec, __most_similar
 global __word2vec, __w2c_pre_trained
 global __fasttext, __ft_pre_trained
 global __tfidf_model, __tfidf_index, __tfidf_dictionary
-global __preferences_IDs, __tokenized_plots, __films_IDs, __films_titles
+global __tokenized_plots, __films_IDs, __films_titles
 global __id_Model  # il numero che identifica il modello selezionato
 global __returned_queue  # returned_queue.get()
 
@@ -99,6 +101,7 @@ def select_model(selected_model):
             thread = threading.Thread(target=ft.load_model, args=(__tokenized_plots, "Models/FastText/fasttext_model",
                                                                   __returned_queue))
             thread.start()
+        __id_Model = selected_model
 
     if selected_model == 7:
         global __tfidf_model, __tfidf_index, __tfidf_dictionary
@@ -111,6 +114,54 @@ def select_model(selected_model):
                                                                        "Models/TFIDF/dictionary_tfidf",
                                                                        __returned_queue))
         thread.start()
+        __id_Model = selected_model
 
 
-    
+def get_suggestion(preferences_IDs):
+    global __tokenized_plots, __films_IDs, __films_titles
+    IDs_pref = list()
+    tokenized_pref = list()
+    for id in preferences_IDs:
+        try:
+            index = __films_IDs.index(id)
+            IDs_pref.append(id)
+            tokenized_pref.append(__tokenized_plots[index])
+            recommends = __get_rec(IDs_pref, tokenized_pref)
+            return recommends
+        except Exception:
+            return ERROR_FILM_NOT_FOUND
+
+
+def __get_rec(IDs_pref, tokenized_pref):
+    global __tokenized_plots, __films_IDs, __films_titles
+    global __id_Model
+    global __returned_queue
+    if __id_Model == 1 or __id_Model == 2:
+        global __doc2vec, __most_similar
+        __doc2vec = __returned_queue.get()
+        recommands = d2v.print_res_doc2vec(token_strings=tokenized_pref, documents=__tokenized_plots,
+                                           titles=__films_titles, IDs=__films_IDs, modelDoC=__doc2vec,
+                                           most_similar=__most_similar, prefIDs=IDs_pref)
+    elif __id_Model == 3 or __id_Model == 4:
+        global __word2vec, __w2c_pre_trained
+        __word2vec = __returned_queue.get()
+        recommands = w2v.print_res_word2vec(token_strings=tokenized_pref, documents=__tokenized_plots,
+                                            titles=__films_titles, IDs=__films_IDs, modelWord=__word2vec,
+                                            pretrained=__w2c_pre_trained, prefIDs=IDs_pref)
+    elif __id_Model == 5 or __id_Model == 6:
+        global __fasttext, __ft_pre_trained
+        __fasttext = __returned_queue.get()
+        recommands = ft.print_res_fastText(token_strings=tokenized_pref, documents=__tokenized_plots,
+                                           titles=__films_titles, IDs=__films_IDs, modelFastText=__fasttext,
+                                           pretrained=__ft_pre_trained, prefIDs=IDs_pref)
+    elif __id_Model == 7:
+        global __tfidf_model, __tfidf_index, __tfidf_dictionary
+        loaded = __returned_queue.get()
+        __tfidf_model = loaded[0]
+        __tfidf_index = loaded[1]
+        __tfidf_dictionary = loaded[2]
+        recommands = tfidf.print_res_tfidf(token_strings=tokenized_pref, documents=__tokenized_plots,
+                                           titles=__films_titles, IDs=__films_IDs, dictionary=__tfidf_dictionary,
+                                           tfidfmodel=__tfidf_model, index=__tfidf_index, prefIDs=IDs_pref)
+    return recommands
+

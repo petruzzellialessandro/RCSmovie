@@ -61,21 +61,22 @@ def load_model(documents, model_name, queue):
 
 def print_res_fastText(token_strings, documents, titles, IDs, modelFastText, pretrained, prefIDs):
     cos_sim_s = []
+    recommend_movies = []
     if modelFastText is None:
         if pretrained:
             modelFastText = create_model_fasttext_fb(modelFastText, None)
         else:
             modelFastText = load_model(documents, "Models/FastText/fasttext_model", None)
     if pretrained:
-        querys = list()
+        queries = list()
         for string in token_strings:
-            querys.append(centroid_fastext_FB(string, modelFastText))
-        query = np.asarray(querys).mean(axis=0)
+            queries.append(centroid_fastext_FB(string, modelFastText))
+        query = np.asarray(queries).mean(axis=0)
     else:
-        querys = list()
+        queries = list()
         for string in token_strings:
-            querys.append(calculate_centroid(string, modelFastText))
-        query = np.asarray(querys).mean(axis=0)
+            queries.append(calculate_centroid(string, modelFastText))
+        query = np.asarray(queries).mean(axis=0)
     for i, doc in enumerate(documents):
         if pretrained:
             films_found = centroid_fastext_FB(doc, modelFastText)
@@ -89,18 +90,20 @@ def print_res_fastText(token_strings, documents, titles, IDs, modelFastText, pre
     cos_sim_s, titles, IDs = zip(*sorted(zip(cos_sim_s, titles, IDs), reverse=True))
     outputW2V = []
     rank = 1
-    for i in range(5+len(token_strings)):
+    for i in range(5 + len(token_strings)):
         if len(outputW2V) == 5:
             break
         if prefIDs is not None:
             if IDs[i] in prefIDs:
                 continue
+        recommend_movies.append({"Rank": rank, "ID": IDs[i]})
         outputW2V.append([rank, titles[i], cos_sim_s[i]])
         rank += 1
-    if pretrained:
-        print("--------------FastText-PreTrained--------------")
-    else:
-        print("--------------FastText-Centroid--------------")
-    df = pd.DataFrame(outputW2V, columns=["rank", "title", "cosine_similarity"])
-    pd.set_option("display.max_rows", None, "display.max_columns", None)
-    print(df)
+    # if pretrained:
+    #     print("--------------FastText-PreTrained--------------")
+    # else:
+    #     print("--------------FastText-Centroid--------------")
+    # df = pd.DataFrame(outputW2V, columns=["rank", "title", "cosine_similarity"])
+    # pd.set_option("display.max_rows", None, "display.max_columns", None)
+    # print(df)
+    return recommend_movies

@@ -30,6 +30,7 @@ def load_tfidf_model(documents, model_name, matrix_name, dic_name, queue):
 
 
 def print_res_tfidf(token_strings, documents, titles, IDs, dictionary, tfidfmodel, index, prefIDs):
+    recommend_movies = []
     if dictionary is None or tfidfmodel is None or index is None:
         tfidfmodel, index, dictionary = load_tfidf_model(documents, "Models/TFIDF/tfidf_model",
                                                          "Models/TFIDF/matrix_tfidf",
@@ -56,9 +57,11 @@ def print_res_tfidf(token_strings, documents, titles, IDs, dictionary, tfidfmode
         if prefIDs is not None:
             if IDs[i] in prefIDs:
                 continue
+        recommend_movies.append({"Rank": rank, "ID": IDs[i]})
         outputW2V.append([rank, titles[i], cos_sim_s[i]])
         rank += 1
-    print("--------------TF-IDF--------------")
-    df = pd.DataFrame(outputW2V, columns=["rank", "title", "cosine_similarity"])
-    pd.set_option("display.max_rows", None, "display.max_columns", None)
-    print(df)
+    # print("--------------TF-IDF--------------")
+    # df = pd.DataFrame(outputW2V, columns=["rank", "title", "cosine_similarity"])
+    # pd.set_option("display.max_rows", None, "display.max_columns", None)
+    # print(df)
+    return recommend_movies

@@ -41,13 +41,14 @@ def load_model(documents, model_name, pretrained, queue):
 
 
 def print_res_word2vec(token_strings, documents, titles, IDs, pretrained, modelWord, prefIDs):
+    recommend_movies = []
     if modelWord is None:
         modelWord = load_model(documents, "Models\Word2Vec\word2vec_model", pretrained, None)
     cos_sim_s = []
-    querys = list()
+    queries = list()
     for string in token_strings:
-        querys.append(calculate_centroid(string, modelWord))
-    query = np.asarray(querys).mean(axis=0)
+        queries.append(calculate_centroid(string, modelWord))
+    query = np.asarray(queries).mean(axis=0)
     for i, doc in enumerate(documents):
         films_found = calculate_centroid(doc, modelWord)
         if len(films_found) == 0:
@@ -64,12 +65,14 @@ def print_res_word2vec(token_strings, documents, titles, IDs, pretrained, modelW
         if prefIDs is not None:
             if IDs[i] in prefIDs:
                 continue
+        recommend_movies.append({"Rank": rank, "ID": IDs[i]})
         outputW2V.append([rank, titles[i], cos_sim_s[i]])
         rank += 1
-    if pretrained:
-        print("--------------W2V-PreTrained--------------")
-    else:
-        print("--------------W2V-Centroid--------------")
-    df = pd.DataFrame(outputW2V, columns=["rank", "title", "cosine_similarity"])
-    pd.set_option("display.max_rows", None, "display.max_columns", None)
-    print(df)
+    # if pretrained:
+    #     print("--------------W2V-PreTrained--------------")
+    # else:
+    #     print("--------------W2V-Centroid--------------")
+    # df = pd.DataFrame(outputW2V, columns=["rank", "title", "cosine_similarity"])
+    # pd.set_option("display.max_rows", None, "display.max_columns", None)
+    # print(df)
+    return recommend_movies
