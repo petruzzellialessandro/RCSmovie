@@ -18,7 +18,7 @@ The suggestions are provided by one of these models. We can choose, and load, th
 * 6 to use FastText. In this case will be loaded a model trained with the films plots in dataset.
 * 7 to use TFIDF
 
-The 2 pre-trained have to be downloaded and pasted in the folder `Model\Pretrained`
+All have to be downloaded and pasted in the folder `Model\Name_Model` (link)
 
 To get the suggestions we can use the method `get_suggestion(preferences_IDs)`.
 `preferences_IDs` is a list of IDs. Each ID matches a film in dataset. This methods return a list of 5 IDs (one per recommended film).
