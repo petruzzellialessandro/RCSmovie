@@ -4,6 +4,7 @@ from gensim.similarities import MatrixSimilarity
 from gensim.models import TfidfModel
 from gensim.corpora import Dictionary
 
+
 def create_model_tfidf_model(documents, model_name, matrix_name, dic_name):
     dictionary = Dictionary(documents)
     corpus = [dictionary.doc2bow(doc) for doc in documents]
@@ -15,19 +16,24 @@ def create_model_tfidf_model(documents, model_name, matrix_name, dic_name):
     return tfidfmodel, index, dictionary
 
 
-def load_tfidf_model(documents, model_name, matrix_name, dic_name):
+def load_tfidf_model(documents, model_name, matrix_name, dic_name, queue):
     try:
         tfidfmodel = TfidfModel.load(model_name)
         index = MatrixSimilarity.load(matrix_name)
         dictionary = Dictionary.load(dic_name)
     except Exception:
-        tfidfmodel, index, dictionary = create_model_tfidf_model(documents=documents, model_name= model_name, matrix_name= matrix_name, dic_name= dic_name)
+        tfidfmodel, index, dictionary = create_model_tfidf_model(documents=documents, model_name=model_name,
+                                                                 matrix_name=matrix_name, dic_name=dic_name)
+    if queue is not None:
+        queue.put([tfidfmodel, index, dictionary])
     return tfidfmodel, index, dictionary
 
 
 def print_res_tfidf(token_strings, documents, titles, IDs, dictionary, tfidfmodel, index, prefIDs):
     if dictionary is None or tfidfmodel is None or index is None:
-        tfidfmodel, index, dictionary = load_tfidf_model(documents,"TFIDF/tfidf_model", "TFIDF/matrix_tfidf", "TFIDF/dictionary_tfidf")
+        tfidfmodel, index, dictionary = load_tfidf_model(documents, "Models/TFIDF/tfidf_model",
+                                                         "Models/TFIDF/matrix_tfidf",
+                                                         "Models/TFIDF/dictionary_tfidf", None)
     sims = []
     try:
         for string in token_strings:

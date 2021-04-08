@@ -27,20 +27,22 @@ def create_model_word2vec(documents, model_name):
     return word2vec
 
 
-def load_model(documents, model_name, pretrained):
+def load_model(documents, model_name, pretrained, queue):
     if pretrained:
         word2vec = models.KeyedVectors.load_word2vec_format('Models/Word2Vec/word2vec-google-news-300.bin', binary=True)
-        return word2vec
-    try:
-        word2vec = Word2Vec.load(model_name)
-    except Exception:
-        word2vec = create_model_word2vec(documents, model_name)
+    else:
+        try:
+            word2vec = Word2Vec.load(model_name)
+        except Exception:
+            word2vec = create_model_word2vec(documents, model_name)
+    if queue is not None:
+        queue.put(word2vec)
     return word2vec
 
 
 def print_res_word2vec(token_strings, documents, titles, IDs, pretrained, modelWord, prefIDs):
     if modelWord is None:
-        modelWord = load_model(documents, "Word2Vec\word2vec_model", pretrained)
+        modelWord = load_model(documents, "Models\Word2Vec\word2vec_model", pretrained, None)
     cos_sim_s = []
     querys = list()
     for string in token_strings:

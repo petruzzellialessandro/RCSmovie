@@ -33,9 +33,11 @@ def centroid_fastext_FB(text, model):
     return np.asarray(vector_string).mean(axis=0)
 
 
-def create_model_fasttext_fb():
+def create_model_fasttext_fb(queue):
     fasttext.util.download_model('en', if_exists='ignore')  # English
     ft = fasttext.load_model('Models/FastText/cc.en.300.bin')
+    if queue is not None:
+        queue.put(ft)
     return ft
 
 
@@ -47,11 +49,13 @@ def create_fasttext_model(documents, model_name):
     return fasttext
 
 
-def load_model(documents, model_name):
+def load_model(documents, model_name, queue):
     try:
         fasttext = FastText.load(model_name)
     except Exception:
         fasttext = create_fasttext_model(documents, model_name)
+    if queue is not None:
+        queue.put(fasttext)
     return fasttext
 
 
@@ -59,9 +63,9 @@ def print_res_fastText(token_strings, documents, titles, IDs, modelFastText, pre
     cos_sim_s = []
     if modelFastText is None:
         if pretrained:
-            modelFastText = create_model_fasttext_fb()
+            modelFastText = create_model_fasttext_fb(None)
         else:
-            modelFastText = load_model(documents, "FastText/fasttext_model")
+            modelFastText = load_model(documents, "Models/FastText/fasttext_model", None)
     if pretrained:
         querys = list()
         for string in token_strings:

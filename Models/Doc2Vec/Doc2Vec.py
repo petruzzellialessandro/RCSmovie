@@ -29,18 +29,20 @@ def create_model_doc2vec(documents, model_name):
     return doc2vec
 
 
-def load_model(documents, model_name):
+def load_model(documents, model_name, queue):
     try:
-        doc2vec = Doc2Vec.load(model_name)
+        model = Doc2Vec.load(model_name)
     except Exception:
-        doc2vec = create_model_doc2vec(documents, model_name)
-    return doc2vec
+        model = create_model_doc2vec(documents, model_name)
+    if queue is not None:
+        queue.put(model)
+    return model
 
 
 def print_res_doc2vec(token_strings, documents, titles, IDs, modelDoC, most_similar, prefIDs):
     cos_sim_s = []
     if modelDoC is None:
-        modelDoC = load_model(documents, "Doc2Vec/doc2vec_model")
+        modelDoC = load_model(documents, "Models/Doc2Vec/doc2vec_model", None)
     if most_similar:
         querys = list()
         try:
