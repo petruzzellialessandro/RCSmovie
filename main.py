@@ -1,7 +1,6 @@
 import csv
 import queue
 import threading
-import time
 
 import gensim.parsing.preprocessing as pp
 
@@ -32,7 +31,9 @@ def __preprocessing(trama):
     return pp_trama
 
 
-# Questa funzione ci permette di caricare in memoria l'intero dataset. Per sicurezza effettua il processing qualora
+# Questa funzione ci permette di caricare in memoria l'intero dataset dataset diviso in token.
+# Questa funzione va sostituita qualora si decidesse di non utilizzare il file già presente.
+# Per sicurezza effettua il processing qualora
 # non risulti diviso in token
 def __tonkens_from_documents_gensim():
     documents = []
@@ -57,17 +58,33 @@ def __tonkens_from_documents_gensim():
     return pp_docs, titles, IDs
 
 
+# Funzione esposta che permette di selezionare il modello con cui ottenere risultati. I valori di selected_model sono:
+# 1 per usare Doc2Vec con il metodo most_similar.
+# 2 per usare Doc2Vec la similarità è con il centroide.
+# 3 per usare Word2Vec per utilizzare un modello pre-addestrato (word2vec-google-news-300).
+# 4 per usare Word2Vec.
+# 5 per usare FastText per utilizzare un modello pre-addestrato (cc.en.300.bin).
+# 6 per usare FastText.
+# 7 per usare TFIDF
 def select_model(selected_model):
     global __tokenized_plots, __films_IDs, __films_titles
     global __id_Model
     global __returned_queue
-    __tokenized_plots, __films_titles, __films_IDs = __tonkens_from_documents_gensim()
-
+    try:
+        if __tokenized_plots is not None and __films_IDs is not None and __films_titles is not None:
+            print("Already Loaded") #Già caricati in memoria le informazini sui film
+        else:
+            raise Exception
+    except Exception:
+        __tokenized_plots, __films_titles, __films_IDs = __tonkens_from_documents_gensim()
+    #Selezione del modello DOC2VEC
     if selected_model == 1 or selected_model == 2:
         global __doc2vec, __most_similar
         try:
             if __doc2vec is not None:
-                print("Already Loaded")
+                print("Already Loaded") #Si evita di ricaricare il modello
+            else:
+                raise Exception
         except Exception:
             __doc2vec = None
             __returned_queue = queue.Queue()
@@ -79,7 +96,7 @@ def select_model(selected_model):
         else:
             __most_similar = False
         __id_Model = selected_model
-
+    #Selezione del modello WORD2VEC
     if selected_model == 3 or selected_model == 4:
         global __word2vec, __w2c_pre_trained
         if selected_model == 3:
@@ -88,7 +105,7 @@ def select_model(selected_model):
             __w2c_pre_trained = False
         try:
             if __word2vec is not None and __id_Model == selected_model:
-                print("Already Loaded")
+                print("Already Loaded")#Si evita di ricaricare il modello
             else:
                 raise Exception
         except Exception:
@@ -98,7 +115,7 @@ def select_model(selected_model):
                                                                    __w2c_pre_trained, __returned_queue))
             thread.start()
         __id_Model = selected_model
-
+    #Selezione del modello FASTTEXT
     if selected_model == 5 or selected_model == 6:
         global __fasttext, __ft_pre_trained
         __returned_queue = queue.Queue()
@@ -106,7 +123,7 @@ def select_model(selected_model):
             __ft_pre_trained = True
             try:
                 if __fasttext is not None and selected_model == __id_Model:
-                    print("Already Loaded")
+                    print("Already Loaded")#Si evita di ricaricare il modello
                 else:
                     raise Exception
             except Exception:
@@ -127,7 +144,7 @@ def select_model(selected_model):
                                                                       __returned_queue))
                 thread.start()
         __id_Model = selected_model
-
+    # Selezione del modello TFIDF
     if selected_model == 7:
         global __tfidf_model, __tfidf_index, __tfidf_dictionary
         try:
@@ -140,14 +157,21 @@ def select_model(selected_model):
             __tfidf_index = None
             __tfidf_dictionary = None
             __returned_queue = queue.Queue()
-            thread = threading.Thread(target=tfidf.load_tfidf_model, args=(__tokenized_plots, "Models/TFIDF/tfidf_model",
-                                                                           "Models/TFIDF/matrix_tfidf",
-                                                                           "Models/TFIDF/dictionary_tfidf",
-                                                                           __returned_queue))
+            thread = threading.Thread(target=tfidf.load_tfidf_model,
+                                      args=(__tokenized_plots, "Models/TFIDF/tfidf_model",
+                                            "Models/TFIDF/matrix_tfidf",
+                                            "Models/TFIDF/dictionary_tfidf",
+                                            __returned_queue))
             thread.start()
         __id_Model = selected_model
+    else:
+        return 404 #MODELLO NON TROVATO
 
 
+# Funzionalità esposta. In input c'è una lista di IDs per cui è presente una preferenza.
+# NB: Anche se è una preferenza, deve essere una lista.
+# In caso non sia sata chiamata la funzione select_model() allora __film_IDs è null quindi si sollega l'eccezione per
+# cui sarà restituito "ERROR_FILM_NOT_FOUND"
 def get_suggestion(preferences_IDs):
     global __tokenized_plots, __films_IDs, __films_titles
     IDs_pref = list()
@@ -163,6 +187,8 @@ def get_suggestion(preferences_IDs):
             return ERROR_FILM_NOT_FOUND
 
 
+# Funzione che effettivamente si occupa di generare le raccomandazioni in base al modello.
+# DA NON CHIAMARE
 def __get_rec(IDs_pref, tokenized_pref):
     global __tokenized_plots, __films_IDs, __films_titles
     global __id_Model
@@ -176,6 +202,7 @@ def __get_rec(IDs_pref, tokenized_pref):
                 raise Exception
         except Exception:
             __doc2vec = __returned_queue.get()
+            # Se il modello non è caricato lo prendiamo dalla cosa dei risultato. Aspetta che termini il thread
         recommends = d2v.print_res_doc2vec(token_strings=tokenized_pref, documents=__tokenized_plots,
                                            titles=__films_titles, IDs=__films_IDs, modelDoC=__doc2vec,
                                            most_similar=__most_similar, prefIDs=IDs_pref)
@@ -188,6 +215,7 @@ def __get_rec(IDs_pref, tokenized_pref):
                 raise Exception
         except Exception:
             __word2vec = __returned_queue.get()
+            # Se il modello non è caricato lo prendiamo dalla cosa dei risultato. Aspetta che termini il thread
         recommends = w2v.print_res_word2vec(token_strings=tokenized_pref, documents=__tokenized_plots,
                                             titles=__films_titles, IDs=__films_IDs, modelWord=__word2vec,
                                             pretrained=__w2c_pre_trained, prefIDs=IDs_pref)
@@ -200,6 +228,7 @@ def __get_rec(IDs_pref, tokenized_pref):
                 raise Exception
         except Exception:
             __fasttext = __returned_queue.get()
+            # Se il modello non è caricato lo prendiamo dalla cosa dei risultato. Aspetta che termini il thread
         recommends = ft.print_res_fastText(token_strings=tokenized_pref, documents=__tokenized_plots,
                                            titles=__films_titles, IDs=__films_IDs, modelFastText=__fasttext,
                                            pretrained=__ft_pre_trained, prefIDs=IDs_pref)
@@ -215,6 +244,7 @@ def __get_rec(IDs_pref, tokenized_pref):
             __tfidf_model = loaded[0]
             __tfidf_index = loaded[1]
             __tfidf_dictionary = loaded[2]
+            # Se il modello non è caricato lo prendiamo dalla cosa dei risultato. Aspetta che termini il thread
         recommends = tfidf.print_res_tfidf(token_strings=tokenized_pref, documents=__tokenized_plots,
                                            titles=__films_titles, IDs=__films_IDs, dictionary=__tfidf_dictionary,
                                            tfidfmodel=__tfidf_model, index=__tfidf_index, prefIDs=IDs_pref)
