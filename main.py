@@ -250,3 +250,6 @@ def __get_rec(IDs_pref, tokenized_pref):
                                            tfidfmodel=__tfidf_model, index=__tfidf_index, prefIDs=IDs_pref)
     return recommends
 
+if __name__ == '__main__':
+    select_model(6)
+    print(get_suggestion(["Q25188"]))
