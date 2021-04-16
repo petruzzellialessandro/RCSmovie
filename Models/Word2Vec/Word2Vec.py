@@ -9,7 +9,7 @@ def calculate_centroid(text, model):
     vectors = list()
     for word in text:
         try:
-            vector = model[word]
+            vector = model.wv.get_vector(word)
             vectors.append(vector)
         except Exception:
             # print(word, " non c'è")

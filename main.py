@@ -72,7 +72,7 @@ def select_model(selected_model):
     global __returned_queue
     try:
         if __tokenized_plots is not None and __films_IDs is not None and __films_titles is not None:
-            print("Already Loaded") #Già caricati in memoria le informazini sui film
+            print("Movie Info Already Loaded") #Già caricati in memoria le informazini sui film
         else:
             raise Exception
     except Exception:
@@ -250,6 +250,3 @@ def __get_rec(IDs_pref, tokenized_pref):
                                            tfidfmodel=__tfidf_model, index=__tfidf_index, prefIDs=IDs_pref)
     return recommends
 
-if __name__ == '__main__':
-    select_model(6)
-    print(get_suggestion(["Q25188"]))
