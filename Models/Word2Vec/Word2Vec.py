@@ -12,8 +12,12 @@ def calculate_centroid(text, model):
             vector = model.wv.get_vector(word)
             vectors.append(vector)
         except Exception:
-            # print(word, " non c'è")
-            continue
+            try:
+                vector = model[word]
+                vectors.append(vector)
+            except Exception:
+                # print(word, " non c'è")
+                continue
     if vectors:
         return np.asarray(vectors).mean(axis=0)
     return np.array([])
