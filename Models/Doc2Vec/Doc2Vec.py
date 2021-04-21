@@ -29,7 +29,7 @@ def create_model_doc2vec(documents, model_name):
     return doc2vec
 
 
-def load_model(documents, model_name, queue):
+def load_model(documents, model_name, queue=None):
     try:
         model = Doc2Vec.load(model_name)
     except Exception:
@@ -39,8 +39,9 @@ def load_model(documents, model_name, queue):
     return model
 
 
-def print_res_doc2vec(token_strings, documents, titles, IDs, modelDoC, most_similar, prefIDs):
+def get_recommendations_doc2vec(token_strings, documents, titles, IDs, modelDoC, most_similar, prefIDs):
     recommend_movies = []
+    num_recommends = 5
     cos_sim_s = []
     if modelDoC is None:
         modelDoC = load_model(documents, "Models/Doc2Vec/doc2vec_model", None)
@@ -54,18 +55,18 @@ def print_res_doc2vec(token_strings, documents, titles, IDs, modelDoC, most_simi
             new_sentence_vectorized = modelDoC.infer_vector(token_strings, steps=100)
             queries.append(new_sentence_vectorized)
         query = np.asarray(queries).mean(axis=0)
-        similar_sentences = modelDoC.docvecs.most_similar([query], topn=5+len(token_strings))
+        similar_sentences = modelDoC.docvecs.most_similar([query], topn=5 + len(token_strings))
         outputD2V_MS = []
         rank = 1
         for i, v in enumerate(similar_sentences):
             index = v[0]
-            if len(outputD2V_MS) == 5:
+            if len(outputD2V_MS) == num_recommends:
                 break
             if prefIDs is not None:
                 if IDs[index] in prefIDs:
                     continue
             outputD2V_MS.append([rank, titles[index], v[1]])
-            recommend_movies.append({"Rank":rank, "ID": IDs[index]})
+            recommend_movies.append({"Rank": rank, "ID": IDs[index]})
             rank += 1
         # print("--------------D2V-most_similar--------------")
         # df = pd.DataFrame(outputD2V_MS, columns=["rank", "title", "cosine_similarity"])
@@ -89,8 +90,8 @@ def print_res_doc2vec(token_strings, documents, titles, IDs, modelDoC, most_simi
         cos_sim_s, titles, IDs = zip(*sorted(zip(cos_sim_s, titles, IDs), reverse=True))
         outputD2VCent = []
         rank = 1
-        for i in range(5 + len(token_strings)):
-            if len(outputD2VCent) == 5:
+        for i in range(num_recommends + len(token_strings)):
+            if len(outputD2VCent) == num_recommends:
                 break
             if prefIDs is not None:
                 if IDs[i] in prefIDs:

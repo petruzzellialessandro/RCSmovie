@@ -16,7 +16,7 @@ def create_model_tfidf_model(documents, model_name, matrix_name, dic_name):
     return tfidfmodel, index, dictionary
 
 
-def load_tfidf_model(documents, model_name, matrix_name, dic_name, queue):
+def load_model(documents, model_name, matrix_name, dic_name, queue=None):
     try:
         tfidfmodel = TfidfModel.load(model_name)
         index = MatrixSimilarity.load(matrix_name)
@@ -29,10 +29,11 @@ def load_tfidf_model(documents, model_name, matrix_name, dic_name, queue):
     return tfidfmodel, index, dictionary
 
 
-def print_res_tfidf(token_strings, documents, titles, IDs, dictionary, tfidfmodel, index, prefIDs):
+def get_recommendations_tfidf(token_strings, documents, titles, IDs, dictionary, tfidfmodel, index, prefIDs):
     recommend_movies = []
+    num_recommends = 5
     if dictionary is None or tfidfmodel is None or index is None:
-        tfidfmodel, index, dictionary = load_tfidf_model(documents, "Models/TFIDF/tfidf_model",
+        tfidfmodel, index, dictionary = load_model(documents, "Models/TFIDF/tfidf_model",
                                                          "Models/TFIDF/matrix_tfidf",
                                                          "Models/TFIDF/dictionary_tfidf", None)
     sims = []
@@ -51,8 +52,8 @@ def print_res_tfidf(token_strings, documents, titles, IDs, dictionary, tfidfmode
     cos_sim_s, titles, IDs = zip(*sorted(zip(sim, titles, IDs), reverse=True))
     outputW2V = []
     rank = 1
-    for i in range(5 + len(token_strings)):
-        if len(outputW2V) == 5:
+    for i in range(num_recommends + len(token_strings)):
+        if len(outputW2V) == num_recommends:
             break
         if prefIDs is not None:
             if IDs[i] in prefIDs:

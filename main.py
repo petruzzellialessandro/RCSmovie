@@ -1,7 +1,5 @@
 import RSCCore as core
 from flask import Flask
-import json
-import io
 from flask import request
 from flask import jsonify
 
@@ -12,7 +10,9 @@ __app__ = Flask(__name__)
 def get_suggestions():
     if request.method == "POST":
         content = request.get_data()
-        content = content.decode("utf8").replace("[", "").replace("]", "").replace(" ", "").split(",")
+        print(content)
+        content = content.decode("utf8").replace("[", "").replace("]", "").replace(" ", "").replace('''"''', "")\
+            .replace("'", "").split(",")
         suggestions = core.get_suggestion(content)
         return jsonify(results=suggestions)
 

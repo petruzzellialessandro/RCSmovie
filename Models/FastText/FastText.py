@@ -33,7 +33,7 @@ def centroid_fastext_FB(text, model):
     return np.asarray(vector_string).mean(axis=0)
 
 
-def create_model_fasttext_fb(model, queue):
+def create_model_fasttext_fb(model, queue=None):
     # fasttext.util.download_model('en', if_exists='ignore')  # English
     model = fasttext.load_model('Models/FastText/cc.en.300.bin')
     if queue is not None:
@@ -41,7 +41,7 @@ def create_model_fasttext_fb(model, queue):
     return model
 
 
-def create_fasttext_model(documents, model_name):
+def create_model_fasttext(documents, model_name):
     fasttext = FastText(min_count=1, workers=8, word_ngrams=3, size=100)
     fasttext.build_vocab(documents)
     fasttext.train(documents, total_examples=fasttext.corpus_count, epochs=100)
@@ -49,19 +49,20 @@ def create_fasttext_model(documents, model_name):
     return fasttext
 
 
-def load_model(documents, model_name, queue):
+def load_model(documents, model_name, queue=None):
     try:
         fasttext = FastText.load(model_name)
     except Exception:
-        fasttext = create_fasttext_model(documents, model_name)
+        fasttext = create_model_fasttext(documents, model_name)
     if queue is not None:
         queue.put(fasttext)
     return fasttext
 
 
-def print_res_fastText(token_strings, documents, titles, IDs, modelFastText, pretrained, prefIDs):
+def get_recommendations_fastText(token_strings, documents, titles, IDs, modelFastText, pretrained, prefIDs):
     cos_sim_s = []
     recommend_movies = []
+    num_recommends = 5
     if modelFastText is None:
         if pretrained:
             modelFastText = create_model_fasttext_fb(modelFastText, None)
@@ -90,8 +91,8 @@ def print_res_fastText(token_strings, documents, titles, IDs, modelFastText, pre
     cos_sim_s, titles, IDs = zip(*sorted(zip(cos_sim_s, titles, IDs), reverse=True))
     outputW2V = []
     rank = 1
-    for i in range(5 + len(token_strings)):
-        if len(outputW2V) == 5:
+    for i in range(num_recommends + len(token_strings)):
+        if len(outputW2V) == num_recommends:
             break
         if prefIDs is not None:
             if IDs[i] in prefIDs:

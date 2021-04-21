@@ -31,7 +31,7 @@ def create_model_word2vec(documents, model_name):
     return word2vec
 
 
-def load_model(documents, model_name, pretrained, queue):
+def load_model(documents, model_name, pretrained, queue=None):
     if pretrained:
         word2vec = models.KeyedVectors.load_word2vec_format('Models/Word2Vec/word2vec-google-news-300.bin', binary=True)
     else:
@@ -44,8 +44,9 @@ def load_model(documents, model_name, pretrained, queue):
     return word2vec
 
 
-def print_res_word2vec(token_strings, documents, titles, IDs, pretrained, modelWord, prefIDs):
+def get_recommendations_word2vec(token_strings, documents, titles, IDs, pretrained, modelWord, prefIDs):
     recommend_movies = []
+    num_recommends = 5
     if modelWord is None:
         modelWord = load_model(documents, "Models\Word2Vec\word2vec_model", pretrained, None)
     cos_sim_s = []
@@ -63,8 +64,8 @@ def print_res_word2vec(token_strings, documents, titles, IDs, pretrained, modelW
     cos_sim_s, titles, IDs = zip(*sorted(zip(cos_sim_s, titles, IDs), reverse=True))
     outputW2V = []
     rank = 1
-    for i in range(5 + len(token_strings)):
-        if len(outputW2V) == 5:
+    for i in range(num_recommends + len(token_strings)):
+        if len(outputW2V) == num_recommends:
             break
         if prefIDs is not None:
             if IDs[i] in prefIDs:

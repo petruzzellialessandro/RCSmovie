@@ -65,14 +65,14 @@ def __tonkens_from_documents_gensim__():
 # 4 per usare Word2Vec.
 # 5 per usare FastText per utilizzare un modello pre-addestrato (cc.en.300.bin).
 # 6 per usare FastText.
-# 7 per usare tfidf
+# 7 per usare tfidf.
 def select_model(selected_model):
     global __tokenized_plots__, __films_IDs__, __films_titles__
     global __id_Model__
     global __returned_queue__
     try:
         if __tokenized_plots__ is not None and __films_IDs__ is not None and __films_titles__ is not None:
-            print("Movie Info Already Loaded")  # Già caricati in memoria le informazini sui film
+            print("Movie Info Already Loaded")  # Già caricati in memoria le informazioni sui film
         else:
             raise Exception
     except Exception:
@@ -161,7 +161,7 @@ def select_model(selected_model):
             __tfidf_index__ = None
             __tfidf_dictionary__ = None
             __returned_queue__ = queue.Queue()
-            thread = threading.Thread(target=__tfidf__.load_tfidf_model,
+            thread = threading.Thread(target=__tfidf__.load_model,
                                       args=(__tokenized_plots__, "Models/TFIDF/tfidf_model",
                                             "Models/TFIDF/matrix_tfidf",
                                             "Models/TFIDF/dictionary_tfidf",
@@ -208,7 +208,7 @@ def __get_rec__(IDs_pref, tokenized_pref):
         except Exception:
             __doc2vec__ = __returned_queue__.get()
             # Se il modello non è caricato lo prendiamo dalla cosa dei risultato. Aspetta che termini il thread
-        recommends = __d2v__.print_res_doc2vec(token_strings=tokenized_pref, documents=__tokenized_plots__,
+        recommends = __d2v__.get_recommendations_doc2vec(token_strings=tokenized_pref, documents=__tokenized_plots__,
                                            titles=__films_titles__, IDs=__films_IDs__, modelDoC=__doc2vec__,
                                            most_similar=__most_similar__, prefIDs=IDs_pref)
     elif __id_Model__ == 3 or __id_Model__ == 4:
@@ -221,7 +221,7 @@ def __get_rec__(IDs_pref, tokenized_pref):
         except Exception:
             __word2vec__ = __returned_queue__.get()
             # Se il modello non è caricato lo prendiamo dalla cosa dei risultato. Aspetta che termini il thread
-        recommends = __w2v__.print_res_word2vec(token_strings=tokenized_pref, documents=__tokenized_plots__,
+        recommends = __w2v__.get_recommendations_word2vec(token_strings=tokenized_pref, documents=__tokenized_plots__,
                                             titles=__films_titles__, IDs=__films_IDs__, modelWord=__word2vec__,
                                             pretrained=__w2c_pre_trained__, prefIDs=IDs_pref)
     elif __id_Model__ == 5 or __id_Model__ == 6:
@@ -234,7 +234,7 @@ def __get_rec__(IDs_pref, tokenized_pref):
         except Exception:
             __fasttext__ = __returned_queue__.get()
             # Se il modello non è caricato lo prendiamo dalla cosa dei risultato. Aspetta che termini il thread
-        recommends = __ft__.print_res_fastText(token_strings=tokenized_pref, documents=__tokenized_plots__,
+        recommends = __ft__.get_recommendations_fastText(token_strings=tokenized_pref, documents=__tokenized_plots__,
                                            titles=__films_titles__, IDs=__films_IDs__, modelFastText=__fasttext__,
                                            pretrained=__ft_pre_trained__, prefIDs=IDs_pref)
     elif __id_Model__ == 7:
@@ -250,7 +250,7 @@ def __get_rec__(IDs_pref, tokenized_pref):
             __tfidf_index__ = loaded[1]
             __tfidf_dictionary__ = loaded[2]
             # Se il modello non è caricato lo prendiamo dalla cosa dei risultato. Aspetta che termini il thread
-        recommends = __tfidf__.print_res_tfidf(token_strings=tokenized_pref, documents=__tokenized_plots__,
+        recommends = __tfidf__.get_recommendations_tfidf(token_strings=tokenized_pref, documents=__tokenized_plots__,
                                            titles=__films_titles__, IDs=__films_IDs__, dictionary=__tfidf_dictionary__,
                                            tfidfmodel=__tfidf_model__, index=__tfidf_index__, prefIDs=IDs_pref)
     return recommends
