@@ -43,9 +43,7 @@ def __update_file__(index, append):
         writer.writeheader()
         for i, (ID, title, plot) in enumerate(zip(__films_IDs__, __films_titles__, __tokenized_plots__)):
             writer.writerow({"ID": ID, "Title": title, "Tokens": plot})
-            print(i, index)
             if i > index:
-                print(i)
                 csvfile.close()
                 return 200
     csvfile.close()
@@ -312,7 +310,6 @@ def update_dataset(ID, title, plot):
 def get_suggestion_from_sentence(sentence):
     try:
         recommends = __get_rec__(None, __preprocessing__(sentence))
-        print(recommends)
         return recommends
     except Exception:
         return 400
