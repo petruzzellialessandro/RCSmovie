@@ -9,8 +9,6 @@ import Models.Word2Vec.Word2Vec as __w2v__
 import Models.FastText.FastText as __ft__
 import Models.TFIDF.TFIDF as __tfidf__
 
-ERROR_FILM_NOT_FOUND = 401
-
 global __doc2vec__, __most_similar__
 global __word2vec__, __w2c_pre_trained__
 global __fasttext__, __ft_pre_trained__
@@ -29,6 +27,28 @@ __CUSTOM_FILTERS__ = [lambda x: x.lower(), __pp__.strip_tags,
 def __preprocessing__(trama):
     pp_trama = __pp__.preprocess_string(trama, __CUSTOM_FILTERS__)
     return pp_trama
+
+
+def __update_file__(index, append):
+    global __tokenized_plots__, __films_IDs__, __films_titles__
+    if append:
+        with open('Dataset/tokenFilmsDatset.csv', "a", newline='', encoding="utf8") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([__films_IDs__[index], __films_titles__[index], __tokenized_plots__[index]])
+            csvfile.close()
+            return 200
+    with open('Dataset/tokenFilmsDatset.csv', "r+", newline='', encoding="utf8") as csvfile:
+        fieldnames = ['ID', 'Title', "Tokens"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for i, (ID, title, plot) in enumerate(zip(__films_IDs__, __films_titles__, __tokenized_plots__)):
+            writer.writerow({"ID": ID, "Title": title, "Tokens": plot})
+            print(i, index)
+            if i > index:
+                print(i)
+                csvfile.close()
+                return 200
+    csvfile.close()
 
 
 # Questa funzione ci permette di caricare in memoria l'intero dataset dataset diviso in token.
@@ -131,7 +151,8 @@ def select_model(selected_model):
                     raise Exception
             except Exception:
                 __fasttext__ = None
-                thread = threading.Thread(target=__ft__.create_model_fasttext_fb, args=(__fasttext__, __returned_queue__))
+                thread = threading.Thread(target=__ft__.create_model_fasttext_fb,
+                                          args=(__fasttext__, __returned_queue__))
                 thread.start()
         else:
             __ft_pre_trained__ = False
@@ -143,8 +164,8 @@ def select_model(selected_model):
             except Exception:
                 __fasttext__ = None
                 thread = threading.Thread(target=__ft__.load_model, args=(__tokenized_plots__, "Models/FastText"
-                                                                                           "/fasttext_model",
-                                                                      __returned_queue__))
+                                                                                               "/fasttext_model",
+                                                                          __returned_queue__))
                 thread.start()
         __id_Model__ = selected_model
         return 200
@@ -189,7 +210,7 @@ def get_suggestion(preferences_IDs):
             recommends = __get_rec__(IDs_pref, tokenized_pref)
             return recommends
         except Exception:
-            return ERROR_FILM_NOT_FOUND
+            return 400 #Film non trovato
 
 
 # Funzione che effettivamente si occupa di generare le raccomandazioni in base al modello.
@@ -209,8 +230,9 @@ def __get_rec__(IDs_pref, tokenized_pref):
             __doc2vec__ = __returned_queue__.get()
             # Se il modello non è caricato lo prendiamo dalla cosa dei risultato. Aspetta che termini il thread
         recommends = __d2v__.get_recommendations_doc2vec(token_strings=tokenized_pref, documents=__tokenized_plots__,
-                                           titles=__films_titles__, IDs=__films_IDs__, modelDoC=__doc2vec__,
-                                           most_similar=__most_similar__, prefIDs=IDs_pref)
+                                                         titles=__films_titles__, IDs=__films_IDs__,
+                                                         modelDoC=__doc2vec__,
+                                                         most_similar=__most_similar__, prefIDs=IDs_pref)
     elif __id_Model__ == 3 or __id_Model__ == 4:
         global __word2vec__, __w2c_pre_trained__
         try:
@@ -222,8 +244,9 @@ def __get_rec__(IDs_pref, tokenized_pref):
             __word2vec__ = __returned_queue__.get()
             # Se il modello non è caricato lo prendiamo dalla cosa dei risultato. Aspetta che termini il thread
         recommends = __w2v__.get_recommendations_word2vec(token_strings=tokenized_pref, documents=__tokenized_plots__,
-                                            titles=__films_titles__, IDs=__films_IDs__, modelWord=__word2vec__,
-                                            pretrained=__w2c_pre_trained__, prefIDs=IDs_pref)
+                                                          titles=__films_titles__, IDs=__films_IDs__,
+                                                          modelWord=__word2vec__,
+                                                          pretrained=__w2c_pre_trained__, prefIDs=IDs_pref)
     elif __id_Model__ == 5 or __id_Model__ == 6:
         global __fasttext__, __ft_pre_trained__
         try:
@@ -235,8 +258,9 @@ def __get_rec__(IDs_pref, tokenized_pref):
             __fasttext__ = __returned_queue__.get()
             # Se il modello non è caricato lo prendiamo dalla cosa dei risultato. Aspetta che termini il thread
         recommends = __ft__.get_recommendations_fastText(token_strings=tokenized_pref, documents=__tokenized_plots__,
-                                           titles=__films_titles__, IDs=__films_IDs__, modelFastText=__fasttext__,
-                                           pretrained=__ft_pre_trained__, prefIDs=IDs_pref)
+                                                         titles=__films_titles__, IDs=__films_IDs__,
+                                                         modelFastText=__fasttext__,
+                                                         pretrained=__ft_pre_trained__, prefIDs=IDs_pref)
     elif __id_Model__ == 7:
         global __tfidf_model__, __tfidf_index__, __tfidf_dictionary__
         try:
@@ -251,8 +275,46 @@ def __get_rec__(IDs_pref, tokenized_pref):
             __tfidf_dictionary__ = loaded[2]
             # Se il modello non è caricato lo prendiamo dalla cosa dei risultato. Aspetta che termini il thread
         recommends = __tfidf__.get_recommendations_tfidf(token_strings=tokenized_pref, documents=__tokenized_plots__,
-                                           titles=__films_titles__, IDs=__films_IDs__, dictionary=__tfidf_dictionary__,
-                                           tfidfmodel=__tfidf_model__, index=__tfidf_index__, prefIDs=IDs_pref)
+                                                         titles=__films_titles__, IDs=__films_IDs__,
+                                                         dictionary=__tfidf_dictionary__,
+                                                         tfidfmodel=__tfidf_model__, index=__tfidf_index__,
+                                                         prefIDs=IDs_pref)
     return recommends
+
+
+def update_dataset(ID, title, plot):
+    append = True
+    global __tokenized_plots__, __films_IDs__, __films_titles__
+    try:
+        if __tokenized_plots__ is not None and __films_IDs__ is not None and __films_titles__ is not None:
+            print("Movie Info Already Loaded")  # Già caricati in memoria le informazioni sui film
+        else:
+            raise Exception
+    except Exception:
+        __tokenized_plots__, __films_titles__, __films_IDs__ = __tonkens_from_documents_gensim__()
+    try:
+        index = __films_IDs__.index(ID)
+        __films_IDs__.remove(ID)
+        __films_titles__.remove(__films_titles__[index])
+        __tokenized_plots__.remove(__tokenized_plots__[index])
+        append = False
+    except ValueError:
+        index = len(__films_IDs__)
+    __tokenized_plots__.insert(index, __preprocessing__(plot))
+    __films_IDs__.insert(index, ID)
+    __films_titles__.insert(index, title)
+    if __update_file__(index, append) == 200:
+        return 200
+    else:
+        return 400  #file non aggiornato
+
+
+def get_suggestion_from_sentence(sentence):
+    try:
+        recommends = __get_rec__(None, __preprocessing__(sentence))
+        print(recommends)
+        return recommends
+    except Exception:
+        return 400
 
 
