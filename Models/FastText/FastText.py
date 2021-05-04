@@ -14,7 +14,7 @@ def calculate_centroid(text, model):
             vector = model.wv.get_vector(word)
             vectors.append(vector)
         except Exception:
-            # print(word, " non c'è")
+            print(word, " non c'è")
             continue
     if vectors:
         return np.asarray(vectors).mean(axis=0)
@@ -29,6 +29,7 @@ def centroid_fastext_FB(text, model):
         res = model.get_word_vector(token)
         vector_string.append(res)
         if len(vector_string) == 0:
+            print(token, " non c'è")
             vector_string.append(0)
     return np.asarray(vector_string).mean(axis=0)
 
@@ -42,7 +43,7 @@ def create_model_fasttext_fb(model, queue=None):
 
 
 def create_model_fasttext(documents, model_name):
-    fasttext = FastText(min_count=1, workers=8, word_ngrams=3, size=100)
+    fasttext = FastText(min_count=1, workers=8, size=100)
     fasttext.build_vocab(documents)
     fasttext.train(documents, total_examples=fasttext.corpus_count, epochs=100)
     fasttext.save(model_name)
@@ -62,7 +63,7 @@ def load_model(documents, model_name, queue=None):
 def get_recommendations_fastText(token_strings, documents, titles, IDs, modelFastText, pretrained, prefIDs):
     cos_sim_s = []
     recommend_movies = []
-    num_recommends = 5
+    num_recommends = 200
     if modelFastText is None:
         if pretrained:
             modelFastText = create_model_fasttext_fb(modelFastText, None)
@@ -89,22 +90,14 @@ def get_recommendations_fastText(token_strings, documents, titles, IDs, modelFas
         cos_sim = 1 - distance.cosine(query, films_found)
         cos_sim_s.append(cos_sim)
     cos_sim_s, titles, IDs = zip(*sorted(zip(cos_sim_s, titles, IDs), reverse=True))
-    outputW2V = []
     rank = 1
     for i in range(num_recommends + len(token_strings)):
-        if len(outputW2V) == num_recommends:
+        if len(recommend_movies) == num_recommends:
             break
         if prefIDs is not None:
             if IDs[i] in prefIDs:
+                print(IDs[i])
                 continue
-        recommend_movies.append({"Rank": rank, "ID": IDs[i]})
-        outputW2V.append([rank, titles[i], cos_sim_s[i]])
+        recommend_movies.append({"Rank": rank, "ID": IDs[i], "Value": cos_sim_s[i]})
         rank += 1
-    # if pretrained:
-    #     print("--------------FastText-PreTrained--------------")
-    # else:
-    #     print("--------------FastText-Centroid--------------")
-    # df = pd.DataFrame(outputW2V, columns=["rank", "title", "cosine_similarity"])
-    # pd.set_option("display.max_rows", None, "display.max_columns", None)
-    # print(df)
     return recommend_movies

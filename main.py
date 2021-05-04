@@ -13,6 +13,7 @@ def get_suggestions():
         content = request.get_data()
         content = content.decode("utf8").replace("[", "").replace("]", "").replace(" ", "").replace('''"''', "") \
             .replace("'", "").split(",")
+        print(content)
         suggestions = core.get_suggestion(content)
         return jsonify(results=suggestions)
 

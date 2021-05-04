@@ -46,7 +46,7 @@ def load_model(documents, model_name, pretrained, queue=None):
 
 def get_recommendations_word2vec(token_strings, documents, titles, IDs, pretrained, modelWord, prefIDs):
     recommend_movies = []
-    num_recommends = 5
+    num_recommends = 200
     if modelWord is None:
         modelWord = load_model(documents, "Models\Word2Vec\word2vec_model", pretrained, None)
     cos_sim_s = []
@@ -62,22 +62,14 @@ def get_recommendations_word2vec(token_strings, documents, titles, IDs, pretrain
         cos_sim = 1 - distance.cosine(query, films_found)
         cos_sim_s.append(cos_sim)
     cos_sim_s, titles, IDs = zip(*sorted(zip(cos_sim_s, titles, IDs), reverse=True))
-    outputW2V = []
     rank = 1
     for i in range(num_recommends + len(token_strings)):
-        if len(outputW2V) == num_recommends:
+        if len(recommend_movies) == num_recommends:
             break
         if prefIDs is not None:
             if IDs[i] in prefIDs:
+                print(IDs[i])
                 continue
-        recommend_movies.append({"Rank": rank, "ID": IDs[i]})
-        outputW2V.append([rank, titles[i], cos_sim_s[i]])
+        recommend_movies.append({"Rank": rank, "ID": IDs[i], "Value": cos_sim_s[i]})
         rank += 1
-    # if pretrained:
-    #     print("--------------W2V-PreTrained--------------")
-    # else:
-    #     print("--------------W2V-Centroid--------------")
-    # df = pd.DataFrame(outputW2V, columns=["rank", "title", "cosine_similarity"])
-    # pd.set_option("display.max_rows", None, "display.max_columns", None)
-    # print(df)
     return recommend_movies

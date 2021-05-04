@@ -1,4 +1,3 @@
-import pandas as pd
 import numpy as np
 from gensim.similarities import MatrixSimilarity
 from gensim.models import TfidfModel
@@ -31,7 +30,7 @@ def load_model(documents, model_name, matrix_name, dic_name, queue=None):
 
 def get_recommendations_tfidf(token_strings, documents, titles, IDs, dictionary, tfidfmodel, index, prefIDs):
     recommend_movies = []
-    num_recommends = 5
+    num_recommends = 200
     if dictionary is None or tfidfmodel is None or index is None:
         tfidfmodel, index, dictionary = load_model(documents, "Models/TFIDF/tfidf_model",
                                                          "Models/TFIDF/matrix_tfidf",
@@ -50,19 +49,14 @@ def get_recommendations_tfidf(token_strings, documents, titles, IDs, dictionary,
         sims.append(sim)
     sim = np.asarray(sims).mean(axis=0)
     cos_sim_s, titles, IDs = zip(*sorted(zip(sim, titles, IDs), reverse=True))
-    outputW2V = []
     rank = 1
     for i in range(num_recommends + len(token_strings)):
-        if len(outputW2V) == num_recommends:
+        if len(recommend_movies) == num_recommends:
             break
         if prefIDs is not None:
             if IDs[i] in prefIDs:
+                print(IDs[i])
                 continue
-        recommend_movies.append({"Rank": rank, "ID": IDs[i]})
-        outputW2V.append([rank, titles[i], cos_sim_s[i]])
+        recommend_movies.append({"Rank": rank, "ID": IDs[i], "Value": cos_sim_s[i]})
         rank += 1
-    # print("--------------TF-IDF--------------")
-    # df = pd.DataFrame(outputW2V, columns=["rank", "title", "cosine_similarity"])
-    # pd.set_option("display.max_rows", None, "display.max_columns", None)
-    # print(df)
     return recommend_movies
