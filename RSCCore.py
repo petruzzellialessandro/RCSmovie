@@ -74,12 +74,26 @@ def __tonkens_from_documents_gensim__():
             raw_cast = row["Cast"].splitlines()
             raw_genres = row["Genres"].splitlines()
             raw_directors = row["Directors"].splitlines()
-            for ID in raw_cast:
-                cast.append(str(ID.replace(" ", "").replace("""'""", """""")))
-            for ID in raw_genres:
-                genres.append(str(ID.replace(" ", "").replace("""'""", """""")))
-            for ID in raw_directors:
-                directors.append(str(ID.replace(" ", "").replace("""'""", """""")))
+            film_cast = list()
+            film_genres = list()
+            film_dir = list()
+            for listcast in raw_cast:
+                row_IDS = listcast.split(",")
+                for ID in row_IDS:
+                    film_cast.append(ID.replace(" ", "").replace("""'""", """""").replace("[", "").replace("]", ""))
+            cast.append(film_cast)
+            for listgeneres in raw_genres:
+                row_IDS = listgeneres.split(",")
+                for ID in row_IDS:
+                    film_genres.append(ID.replace(" ", "").replace("""'""", """""").replace("[", "").replace("]", ""))
+            genres.append(film_genres)
+            for listdir in raw_directors:
+                row_IDS = listdir.split(",")
+                for ID in row_IDS:
+                    film_dir.append(ID.replace(" ", "").replace("""'""", """""").replace("[", "").replace("]", ""))
+            directors.append(film_dir)
+            # for ID in raw_directors:
+            #     directors.append(str(ID.replace(" ", "").replace("""'""", """""")))
             for token in tokens.split(','):
                 new_tokens.append(token.replace("""'""", """"""))
             n_features.append(len(new_tokens))
@@ -242,9 +256,15 @@ def __calculate_entity_bias__(IDs_pref, recommends):
     entity_genres_pref = list()
     entity_directors_pref = list()
     for ID in IDs_pref:
-        entity_cast_pref.append(__films_cast__[__films_IDs__.index(ID)])
-        entity_genres_pref.append(__films_genres__[__films_IDs__.index(ID)])
-        entity_directors_pref.append(__films_directors__[__films_IDs__.index(ID)])
+        film_cast = __films_cast__[__films_IDs__.index(ID)]
+        film_generes = __films_genres__[__films_IDs__.index(ID)]
+        film_directors = __films_directors__[__films_IDs__.index(ID)]
+        for actor in film_cast:
+            entity_cast_pref.append(actor)
+        for genre in film_generes:
+            entity_genres_pref.append(genre)
+        for director in film_directors:
+            entity_directors_pref.append(director)
     list_IDs = list()
     list_value = list()
     for film in recommends:
@@ -253,18 +273,21 @@ def __calculate_entity_bias__(IDs_pref, recommends):
         film_cast = __films_cast__[__films_IDs__.index(film_ID)]
         film_genres = __films_genres__[__films_IDs__.index(film_ID)]
         film_directors = __films_directors__[__films_IDs__.index(film_ID)]
-        for actor in entity_cast_pref:
-            if actor in film_cast:
-                print(actor)
-                film_value += mean_value * ACTOR_BIAS
-        for director in entity_directors_pref:
-            if director in film_directors:
-                print(director)
-                film_value += mean_value * DIRECTOR_BIAS
-        for genre in entity_genres_pref:
-            if genre in film_genres:
-                print(genre)
-                film_value += mean_value * GENRE_BIAS
+        if len(film_cast) > 0 and len(entity_cast_pref) > 0:
+            for actor in entity_cast_pref:
+                if actor in film_cast:
+                    # print("Attore " + actor)
+                    film_value += mean_value * ACTOR_BIAS
+        if len(film_directors) > 0 and len(entity_directors_pref) > 0:
+            for director in entity_directors_pref:
+                if director in film_directors:
+                    # print("Regista "+ director)
+                    film_value += mean_value * DIRECTOR_BIAS
+        if len(film_genres) > 0 and len(entity_genres_pref) > 0:
+            for genre in entity_genres_pref:
+                if genre in film_genres:
+                    # print("Genere "+genre)
+                    film_value += mean_value * GENRE_BIAS
         list_IDs.append(film_ID)
         list_value.append(film_value)
     value, IDs = zip(*sorted(zip(list_value, list_IDs), reverse=True))
@@ -277,6 +300,7 @@ def __calculate_entity_bias__(IDs_pref, recommends):
     df = pd.DataFrame(output_to_print, columns=["rank", "title", "cosine_similarity"])
     pd.set_option("display.max_rows", None, "display.max_columns", None)
     print(df)
+
     return recommends_entity
 
 
@@ -393,9 +417,10 @@ def get_suggestion_from_sentence(sentence):
 #     # csvfile.close()
 #     for i in range(1, 8):
 #         select_model(i)
-#         get_suggestion(["Q190525", "Q25188", "Q46551"])
+#         get_suggestion(["Q47075", "Q220713"])
 #     # Q102244-Q102438 Harry Potter 1-2
 #     # Q192724-Q163872 Iron Man-Cavalire Oscuro #TFIDF forse dovuta alla lunghezza della trama di Batman rispetto
 #     # Q190525-Q220713 Memento-American Pie
 #     # Q47075-Q36479 Scarface-Re Leone
 #     # Q13099455-Q27894574-Q63985561-Q274167-Q219315 Maze Runner-Bohemian Rhapsody-Tenet-L'esorcista-Hangover
+#     # Q155476-Q1392744-Q188652-Q1930376-Q483815 The Fast and the Furious-The Wolf of Wall Street-Rocky-Classic Albums: Nirvana – Nevermind-Shrek
