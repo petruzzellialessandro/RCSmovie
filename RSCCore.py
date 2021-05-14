@@ -408,16 +408,16 @@ def get_suggestion_from_sentence(sentence):
         return 400
 
 
-# if __name__ == '__main__':
-#     preferences = list()
-#     # with open("""C:\\Users\petru\Documents\Tesi\createProfile\\the_godfather_test.csv""",  newline='', encoding="utf8") as csvfile:
-#     #     reader = csv.DictReader(csvfile)
-#     #     for row in reader:
-#     #         preferences.append(row["ID"])
-#     # csvfile.close()
-#     for i in range(1, 8):
-#         select_model(i)
-#         get_suggestion(["Q47075", "Q220713"])
+#if __name__ == '__main__':
+#    preferences = list()
+    # with open("""C:\\Users\petru\Documents\Tesi\createProfile\\the_godfather_test.csv""",  newline='', encoding="utf8") as csvfile:
+    #     reader = csv.DictReader(csvfile)
+    #     for row in reader:
+    #         preferences.append(row["ID"])
+    # csvfile.close()
+    # for i in range(1, 8):
+    #     select_model(i)
+    #     print(get_suggestion_from_sentence("I liked film about war and aliens"))
 #     # Q102244-Q102438 Harry Potter 1-2
 #     # Q192724-Q163872 Iron Man-Cavalire Oscuro #TFIDF forse dovuta alla lunghezza della trama di Batman rispetto
 #     # Q190525-Q220713 Memento-American Pie

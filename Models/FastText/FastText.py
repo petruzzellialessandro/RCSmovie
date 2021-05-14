@@ -14,7 +14,7 @@ def calculate_centroid(text, model):
             vector = model.wv.get_vector(word)
             vectors.append(vector)
         except Exception:
-            print(word, " non c'è")
+            # print(word, " non c'è")
             continue
     if vectors:
         return np.asarray(vectors).mean(axis=0)
@@ -29,7 +29,7 @@ def centroid_fastext_FB(text, model):
         res = model.get_word_vector(token)
         vector_string.append(res)
         if len(vector_string) == 0:
-            print(token, " non c'è")
+            # print(token, " non c'è")
             vector_string.append(0)
     return np.asarray(vector_string).mean(axis=0)
 

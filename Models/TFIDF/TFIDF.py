@@ -33,8 +33,8 @@ def get_recommendations_tfidf(token_strings, documents, titles, IDs, dictionary,
     num_recommends = 200
     if dictionary is None or tfidfmodel is None or index is None:
         tfidfmodel, index, dictionary = load_model(documents, "Models/TFIDF/tfidf_model",
-                                                         "Models/TFIDF/matrix_tfidf",
-                                                         "Models/TFIDF/dictionary_tfidf", None)
+                                                   "Models/TFIDF/matrix_tfidf",
+                                                   "Models/TFIDF/dictionary_tfidf", None)
     sims = []
     try:
         for string in token_strings:
