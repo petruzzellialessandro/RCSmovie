@@ -279,7 +279,7 @@ def get_suggestion(preferences_IDs, pref_entity, sentences):
     value_cos_temp = []
     if len(pref_entity) > 0:
         for i in range(len(__films_IDs__)):
-            value_cos_temp.append(recommends_from_movie[i]["Value"] + recommends_from_senteces[i]["Value"] + 0.1)
+            value_cos_temp.append(recommends_from_movie[i]["Value"] + recommends_from_senteces[i]["Value"]*0.5 + 0.1)
         recommends_from_entity = __get_suggestion_from_entity__(pref_entity, films_IDs=__films_IDs__,
                                                                 films_cast=__films_cast__,
                                                                 films_genres=__films_genres__,
@@ -297,7 +297,7 @@ def get_suggestion(preferences_IDs, pref_entity, sentences):
                 list_IDs.append(recommends_from_movie[i]["ID"])
                 list_value.append(
                     recommends_from_movie[i]["Value"] + recommends_from_entity[i]["Value"] + recommends_from_senteces[i][
-                        "Value"])
+                        "Value"]*0.5)
     else:
         for i in range(len(__films_IDs__)):
             list_IDs.append(recommends_from_entity[i]["ID"])
