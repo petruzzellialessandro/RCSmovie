@@ -9,3 +9,4 @@
 /Models/TFIDF/tfidf_model
 /Models/Word2Vec/word2vec_model
 /Models/Word2Vec/word2vec-google-news-300.bin
+glove.twitter.27B.25d.txt

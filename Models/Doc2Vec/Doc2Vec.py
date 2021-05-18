@@ -41,7 +41,7 @@ def load_model(documents, model_name, queue=None):
 
 def get_recommendations_doc2vec(token_strings, documents, titles, IDs, modelDoC, most_similar, prefIDs):
     recommend_movies = []
-    num_recommends = 200
+    num_recommends = len(IDs)
     cos_sim_s = []
     if modelDoC is None:
         modelDoC = load_model(documents, "Models/Doc2Vec/doc2vec_model", None)
@@ -55,18 +55,25 @@ def get_recommendations_doc2vec(token_strings, documents, titles, IDs, modelDoC,
             new_sentence_vectorized = modelDoC.infer_vector(token_strings, steps=100)
             queries.append(new_sentence_vectorized)
         query = np.asarray(queries).mean(axis=0)
-        similar_sentences = modelDoC.docvecs.most_similar([query], topn=num_recommends + len(token_strings))
+        similar_sentences = modelDoC.docvecs.most_similar([query], topn=num_recommends)
         rank = 1
+        list_index = list()
+        list_value = list()
         for i, v in enumerate(similar_sentences):
             index = v[0]
-            if len(recommend_movies) == num_recommends:
-                break
-            if prefIDs is not None:
-                if IDs[index] in prefIDs:
-                    print(IDs[index])
-                    continue
-            recommend_movies.append({"Rank": rank, "ID": IDs[index], "Value": v[1]})
-            rank += 1
+            value = v[1]
+            list_index.append(index)
+            list_value.append(value)
+
+            # if len(recommend_movies) == num_recommends:
+            #     break
+            # if prefIDs is not None:
+            #     if IDs[index] in prefIDs:
+            #         print(IDs[index])
+            #         continue
+        indexs, values = zip(*sorted(zip(list_index, list_value)))
+        for i in range(len(indexs)):
+            recommend_movies.append({"Rank": i+1, "ID": IDs[i], "Value": values[i]})
     else:
         queries = list()
         for string in token_strings:
@@ -82,15 +89,15 @@ def get_recommendations_doc2vec(token_strings, documents, titles, IDs, modelDoC,
             except Exception:
                 cos_sim = 0
             cos_sim_s.append(cos_sim)
-        cos_sim_s, titles, IDs = zip(*sorted(zip(cos_sim_s, titles, IDs), reverse=True))
+        # cos_sim_s, titles, IDs = zip(*sorted(zip(sim, titles, IDs), reverse=True))
         rank = 1
-        for i in range(num_recommends + len(token_strings)):
+        for i in range(num_recommends):
             if len(recommend_movies) == num_recommends:
                 break
-            if prefIDs is not None:
-                if IDs[i] in prefIDs:
-                    print(IDs[i])
-                    continue
+            # if prefIDs is not None:
+            #     if IDs[i] in prefIDs:
+            #         print(IDs[i])
+            #         continue
             recommend_movies.append({"Rank": rank, "ID": IDs[i], "Value": cos_sim_s[i]})
             rank += 1
     return recommend_movies

@@ -11,9 +11,9 @@ __app__ = Flask(__name__)
 def get_suggestions():
     if request.method == "POST":
         content = request.get_data()
-        content = content.decode("utf8").replace("[", "").replace("]", "").replace(" ", "").replace('''"''', "") \
-            .replace("'", "").split(",")
-        suggestions = core.get_suggestion(content)
+        content = content.decode("utf8")
+        content_dir = json.loads(content)
+        suggestions = core.get_suggestion(preferences_IDs=content_dir["movies"], pref_entity=content_dir["entities"], sentences=content_dir["sentences"])
         return jsonify(results=suggestions)
 
 
@@ -32,10 +32,13 @@ def updateDataset():
         content = request.get_data()
         try:
             content = json.loads(content)
-            title = content["Title"]
+            title = content["title"]
             ID = content["ID"]
-            plot = content["Plot"]
-            if core.update_dataset(ID=ID, title=title, plot=plot) == 400:
+            plot = content["plot"]
+            cast = content["cast"]
+            genres = content["genres"]
+            directors = content["directors"]
+            if core.update_dataset(ID=ID, title=title, plot=plot, cast=cast, genres=genres, directors=directors) == 400:
                 return "Dataset not updated"
         except Exception:
             return "Format Error"
@@ -46,7 +49,7 @@ def updateDataset():
 def getSuggestionsFromSentence():
     if request.method == "POST":
         content = request.get_data()
-        suggestions = core.get_suggestion_from_sentence(content)
+        suggestions = core.__get_suggestion_from_sentence__(content)
         return jsonify(results=suggestions)
     
 

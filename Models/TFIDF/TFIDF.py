@@ -30,7 +30,7 @@ def load_model(documents, model_name, matrix_name, dic_name, queue=None):
 
 def get_recommendations_tfidf(token_strings, documents, titles, IDs, dictionary, tfidfmodel, index, prefIDs):
     recommend_movies = []
-    num_recommends = 200
+    num_recommends = len(IDs)
     if dictionary is None or tfidfmodel is None or index is None:
         tfidfmodel, index, dictionary = load_model(documents, "Models/TFIDF/tfidf_model",
                                                    "Models/TFIDF/matrix_tfidf",
@@ -48,15 +48,15 @@ def get_recommendations_tfidf(token_strings, documents, titles, IDs, dictionary,
         sim = index.get_similarities(vec_bow_tfidf)
         sims.append(sim)
     sim = np.asarray(sims).mean(axis=0)
-    cos_sim_s, titles, IDs = zip(*sorted(zip(sim, titles, IDs), reverse=True))
+    # cos_sim_s, titles, IDs = zip(*sorted(zip(sim, titles, IDs), reverse=True))
     rank = 1
-    for i in range(num_recommends + len(token_strings)):
+    for i in range(num_recommends):
         if len(recommend_movies) == num_recommends:
             break
-        if prefIDs is not None:
-            if IDs[i] in prefIDs:
-                print(IDs[i])
-                continue
-        recommend_movies.append({"Rank": rank, "ID": IDs[i], "Value": cos_sim_s[i]})
+        # if prefIDs is not None:
+        #     if IDs[i] in prefIDs:
+        #         print(IDs[i])
+        #         continue
+        recommend_movies.append({"Rank": rank, "ID": IDs[i], "Value": sim[i]})
         rank += 1
     return recommend_movies
