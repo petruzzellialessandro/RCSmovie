@@ -502,7 +502,10 @@ def __get_suggestion_from_sentence__(senteces):
                     if token.pos_ in ["NOUN", "ADJ"]:
                         if token.lemma_ in ["film", "movie"]:
                             continue
-                        sim_words = __local_w2v__.most_similar(token.lemma_, topn=5)
+                        try:
+                            sim_words = __local_w2v__.most_similar(token.lemma_, topn=5)
+                        except Exception:
+                            continue
                         for word in sim_words:
                             nouns.append(word[0])
                         nouns.append(token.lemma_)
@@ -542,7 +545,7 @@ if __name__ == '__main__':
     # "Q172975", "Q26698156", "Q182254"
     # "Q40831", "Q157443", "Q193815", "Q132952"
     get_suggestion(preferences_IDs=[],
-                   pref_entity=["Q40831", "Q157443", "Q193815", "Q132952"], sentences=[])
+                   pref_entity=[], sentences=[""])
 #     # Q102244-Q102438 Harry Potter 1-2
 #     # Q192724-Q163872 Iron Man-Cavalire Oscuro #TFIDF forse dovuta alla lunghezza della trama di Batman rispetto
 #     # Q190525-Q220713 Memento-American Pie
