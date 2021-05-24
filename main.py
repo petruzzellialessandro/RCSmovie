@@ -13,7 +13,10 @@ def get_suggestions():
         content = request.get_data()
         content = content.decode("utf8")
         content_dir = json.loads(content)
-        suggestions = core.get_suggestion(preferences_IDs=content_dir["movies"], pref_entity=content_dir["entities"], sentences=content_dir["sentences"])
+        try:
+            suggestions = core.get_suggestion(preferences_IDs=content_dir["movies"], pref_entity=content_dir["entities"])
+        except Exception:
+            suggestions = "Format Error"
         return jsonify(results=suggestions)
 
 
@@ -49,9 +52,22 @@ def updateDataset():
 def getSuggestionsFromSentence():
     if request.method == "POST":
         content = request.get_data()
-        suggestions = core.__get_suggestion_from_sentence__(content)
-        return jsonify(results=suggestions)
-    
+        content = content.decode("utf8")
+        content_dir = json.loads(content)
+        try:
+            evaluate_sim_word = content_dir["addsynonyms"]
+            suggestions = core.get_suggestions_from_sentence(sentences=content_dir["sentences"],
+                                                             evaluate_sim_word=evaluate_sim_word)
+            return jsonify(results=suggestions)
+        except Exception:
+            try:
+                suggestions = core.get_suggestions_from_sentence(sentences=content_dir["sentences"],
+                                                                 evaluate_sim_word=True)
+                return jsonify(results=suggestions)
+            except Exception:
+                suggestions = "Format Error"
+                return jsonify(results=suggestions)
+
 
 if __name__ == '__main__':
     __app__.run()

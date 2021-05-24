@@ -3,11 +3,9 @@ import queue
 import threading
 
 import gensim.parsing.preprocessing as __pp__
-from gensim import models
-import gensim.downloader as api
 import numpy
-import spacy
 import pandas as pd
+import spacy
 
 import Models.Doc2Vec.Doc2Vec as __d2v__
 import Models.FastText.FastText as __ft__
@@ -54,16 +52,21 @@ def __update_file__(index, append):
     if append:
         with open('Dataset/MovieInfo.csv', "a", newline='', encoding="utf8") as csvfile:
             writer = csv.writer(csvfile)
-            #ID,Title,Tokens,Genres,Cast,Directors
-            writer.writerow([__films_IDs__[index], __films_titles__[index], __tokenized_plots__[index], __films_genres__[index], __films_cast__[index], __films_directors__[index]])
+            # ID,Title,Tokens,Genres,Cast,Directors
+            writer.writerow(
+                [__films_IDs__[index], __films_titles__[index], __tokenized_plots__[index], __films_genres__[index],
+                 __films_cast__[index], __films_directors__[index]])
             csvfile.close()
             return 200
     with open('Dataset/MovieInfo.csv', "r+", newline='', encoding="utf8") as csvfile:
         fieldnames = ['ID', 'Title', "Tokens"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-        for i, (ID, title, plot, genres, cast, directors) in enumerate(zip(__films_IDs__, __films_titles__, __tokenized_plots__, __films_genres__, __films_cast__, __films_directors__)):
-            writer.writerow({"ID": ID, "Title": title, "Tokens": plot, "Genres": genres, "Cast": cast, "Directors": directors})
+        for i, (ID, title, plot, genres, cast, directors) in enumerate(
+                zip(__films_IDs__, __films_titles__, __tokenized_plots__, __films_genres__, __films_cast__,
+                    __films_directors__)):
+            writer.writerow(
+                {"ID": ID, "Title": title, "Tokens": plot, "Genres": genres, "Cast": cast, "Directors": directors})
             if i > index:
                 csvfile.close()
                 return 200
@@ -248,11 +251,37 @@ def select_model(selected_model):
         return 404  # MODELLO NON TROVATO
 
 
+def get_suggestions_from_sentence(sentences, evaluate_sim_word):
+    recommends_from_senteces = []
+    if len(sentences) > 0:
+        recommends_from_senteces = __get_suggestion_from_sentence__(senteces=sentences,
+                                                                    evaluate_sim_word=evaluate_sim_word)
+    else:
+        for i in range(len(__films_IDs__)):
+            recommends_from_senteces.append({"Rank": i + 1, "ID": __films_IDs__[i], "Value": 0})
+    list_value = []
+    list_IDs = []
+    for i in range(len(recommends_from_senteces)):
+        list_IDs.append(recommends_from_senteces[i]["ID"])
+        list_value.append(recommends_from_senteces[i]["Value"])
+    value, IDs = zip(*sorted(zip(list_value, list_IDs), reverse=True))
+    recommends_entity = list()
+    output_to_print = list()
+    for i in range(5):
+        recommends_entity.append({"Rank": len(recommends_entity) + 1, "ID": IDs[i]})
+        output_to_print.append([i + 1, __films_titles__[__films_IDs__.index(IDs[i])], value[i], IDs[i]])
+    print("--------------" + str(__id_Model__) + "--------------")
+    df = pd.DataFrame(output_to_print, columns=["rank", "title", "cosine_similarity", "ID"])
+    pd.set_option("display.max_rows", None, "display.max_columns", None)
+    print(df)
+    return recommends_entity
+
+
 # Funzionalità esposta. In input c'è una lista di IDs per cui è presente una preferenza.
 # NB: Anche se è una preferenza, deve essere una lista.
 # In caso non sia sata chiamata la funzione select_model() allora __film_IDs è null quindi si sollega l'eccezione per
 # cui sarà restituito "ERROR_FILM_NOT_FOUND"
-def get_suggestion(preferences_IDs, pref_entity, sentences):
+def get_suggestion(preferences_IDs, pref_entity):
     global __tokenized_plots__, __films_IDs__, __films_titles__, __films_cast__, __films_genres__, __films_directors__
     IDs_pref = list()
     tokenized_pref = list()
@@ -265,21 +294,16 @@ def get_suggestion(preferences_IDs, pref_entity, sentences):
             return 400  # Film non trovato
     recommends_from_movie = []
     recommends_from_entity = []
-    recommends_from_senteces = []
     if len(preferences_IDs) > 0:
         recommends_from_movie = __get_suggestion_from_movie__(IDs_pref, tokenized_pref)
     else:
         for i in range(len(__films_IDs__)):
             recommends_from_movie.append({"Rank": i + 1, "ID": __films_IDs__[i], "Value": 0})
-    if len(sentences) > 0:
-        recommends_from_senteces = __get_suggestion_from_sentence__(senteces=sentences)
-    else:
-        for i in range(len(__films_IDs__)):
-            recommends_from_senteces.append({"Rank": i + 1, "ID": __films_IDs__[i], "Value": 0})
+
     value_cos_temp = []
     if len(pref_entity) > 0:
         for i in range(len(__films_IDs__)):
-            value_cos_temp.append(recommends_from_movie[i]["Value"] + recommends_from_senteces[i]["Value"]*0.5 + 0.1)
+            value_cos_temp.append(recommends_from_movie[i]["Value"] + 0.1)
         recommends_from_entity = __get_suggestion_from_entity__(pref_entity, films_IDs=__films_IDs__,
                                                                 films_cast=__films_cast__,
                                                                 films_genres=__films_genres__,
@@ -292,12 +316,10 @@ def get_suggestion(preferences_IDs, pref_entity, sentences):
     list_IDs = []
     if len(value_cos_temp) == 0:
         for i in range(len(__films_IDs__)):
-            if recommends_from_movie[i]["ID"] == recommends_from_entity[i]["ID"] and recommends_from_movie[i]["ID"] == \
-                    recommends_from_senteces[i]["ID"]:
+            if recommends_from_movie[i]["ID"] == recommends_from_entity[i]["ID"]:
                 list_IDs.append(recommends_from_movie[i]["ID"])
                 list_value.append(
-                    recommends_from_movie[i]["Value"] + recommends_from_entity[i]["Value"] + recommends_from_senteces[i][
-                        "Value"]*0.5)
+                    recommends_from_movie[i]["Value"] + recommends_from_entity[i]["Value"])
     else:
         for i in range(len(__films_IDs__)):
             list_IDs.append(recommends_from_entity[i]["ID"])
@@ -311,7 +333,8 @@ def get_suggestion(preferences_IDs, pref_entity, sentences):
         if len(recommends_entity) == 5:
             break
         recommends_entity.append({"Rank": len(recommends_entity) + 1, "ID": IDs[i]})
-        output_to_print.append([i + 1, __films_titles__[__films_IDs__.index(IDs[i])], value[i], IDs[i]])
+        output_to_print.append(
+            [len(recommends_entity) + 1, __films_titles__[__films_IDs__.index(IDs[i])], value[i], IDs[i]])
     print("--------------" + str(__id_Model__) + "--------------")
     df = pd.DataFrame(output_to_print, columns=["rank", "title", "cosine_similarity", "ID"])
     pd.set_option("display.max_rows", None, "display.max_columns", None)
@@ -476,19 +499,19 @@ def __get_suggestion_from_movie__(IDs_pref, tokenized_pref):
     return recommends_entity
 
 
-def __get_suggestion_from_sentence__(senteces):
+def __get_suggestion_from_sentence__(senteces, evaluate_sim_word):
     global __queue_nlp__, __npl__, __local_w2v__
+    already_loaded = False
     try:
-        already_loaded = False
         if __local_w2v__ is not None and __npl__ is not None:
             already_loaded = True
             raise Exception
         else:
-            __queue_nlp__ = queue.Queue()
-            __pre_load__()
-            raise Exception
+            if not evaluate_sim_word and not already_loaded:
+                __queue_nlp__ = queue.Queue()
+                __pre_load__()
+                raise Exception
     except Exception:
-        print("ALMENO QUI ")
         if not already_loaded:
             returned_value = __queue_nlp__.get()
             __npl__ = returned_value[0]
@@ -498,37 +521,40 @@ def __get_suggestion_from_sentence__(senteces):
             for sentence in senteces:
                 doc = __npl__(sentence)
                 nouns = []
+                for ent in doc.ents:
+                    nouns.append(str(ent))
                 for token in doc:
                     if token.pos_ in ["NOUN", "ADJ"]:
                         if token.lemma_ in ["film", "movie"]:
                             continue
-                        try:
-                            sim_words = __local_w2v__.most_similar(token.lemma_, topn=5)
-                        except Exception:
-                            continue
-                        for word in sim_words:
-                            nouns.append(word[0])
+                        if evaluate_sim_word:
+                            try:
+                                sim_words = __local_w2v__.most_similar(token.lemma_, topn=5)
+                            except Exception:
+                                continue
+                            for word in sim_words:
+                                nouns.append(word[0])
                         nouns.append(token.lemma_)
                 complete_words.append(nouns)
             print(complete_words)
             recommends = __get_rec__(None, complete_words)
             # recommends = __get_rec__(None, __preprocessing__(sentence))
             return recommends
-        except Exception:
-            print("QUI")
+        except Exception as e:
+            print(str(e))
             return 400
 
 
 def __get_suggestion_from_entity__(entities, films_IDs, films_cast, films_genres, films_directors, film_values):
     recommend_movies = []
     print(entities)
-    mean_value = numpy.mean(film_values)
+    # mean_value = numpy.mean(film_values)
     for i, ID in enumerate(films_IDs):
         sim_value = film_values[i]
         films_entities = numpy.concatenate((films_cast[i], films_genres[i], films_directors[i]))
         for entity in entities:
             if entity in films_entities:
-                sim_value += film_values[i]*0.4
+                sim_value += film_values[i] * 0.4
         recommend_movies.append({"Rank": i + 1, "ID": ID, "Value": sim_value})
     return recommend_movies
 
@@ -544,8 +570,7 @@ if __name__ == '__main__':
     select_model(7)
     # "Q172975", "Q26698156", "Q182254"
     # "Q40831", "Q157443", "Q193815", "Q132952"
-    get_suggestion(preferences_IDs=[],
-                   pref_entity=[], sentences=[""])
+    get_suggestion(preferences_IDs=[], pref_entity=[])
 #     # Q102244-Q102438 Harry Potter 1-2
 #     # Q192724-Q163872 Iron Man-Cavalire Oscuro #TFIDF forse dovuta alla lunghezza della trama di Batman rispetto
 #     # Q190525-Q220713 Memento-American Pie
