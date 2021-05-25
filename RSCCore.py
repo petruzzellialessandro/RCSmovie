@@ -285,6 +285,8 @@ def get_suggestion(preferences_IDs, pref_entity):
     global __tokenized_plots__, __films_IDs__, __films_titles__, __films_cast__, __films_genres__, __films_directors__
     IDs_pref = list()
     tokenized_pref = list()
+    if len(preferences_IDs) + len(pref_entity) == 0:
+        return 400
     for id in preferences_IDs:
         try:
             index = __films_IDs__.index(id)
@@ -524,17 +526,16 @@ def __get_suggestion_from_sentence__(senteces, evaluate_sim_word):
                 for ent in doc.ents:
                     nouns.append(str(ent))
                 for token in doc:
-                    if token.pos_ in ["NOUN", "ADJ"]:
-                        if token.lemma_ in ["film", "movie"]:
+                    if token.lemma_ in ["film", "movie", "like", "love", "appreciate", "I"] or token.is_stop or token.is_punct:
+                        continue
+                    if evaluate_sim_word:
+                        try:
+                            sim_words = __local_w2v__.most_similar(token.lemma_, topn=5)
+                        except Exception:
                             continue
-                        if evaluate_sim_word:
-                            try:
-                                sim_words = __local_w2v__.most_similar(token.lemma_, topn=5)
-                            except Exception:
-                                continue
-                            for word in sim_words:
-                                nouns.append(word[0])
-                        nouns.append(token.lemma_)
+                        for word in sim_words:
+                            nouns.append(word[0])
+                    nouns.append(token.lemma_)
                 complete_words.append(nouns)
             print(complete_words)
             recommends = __get_rec__(None, complete_words)

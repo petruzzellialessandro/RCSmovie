@@ -14,10 +14,12 @@ def get_suggestions():
         content = content.decode("utf8")
         content_dir = json.loads(content)
         try:
-            suggestions = core.get_suggestion(preferences_IDs=content_dir["movies"], pref_entity=content_dir["entities"])
+            suggestions = core.get_suggestion(preferences_IDs=content_dir["movies"],
+                                              pref_entity=content_dir["entities"])
+            return jsonify(results=suggestions)
         except Exception:
             suggestions = "Format Error"
-        return jsonify(results=suggestions)
+            return jsonify(results=suggestions)
 
 
 @__app__.route("/selectModel/<int:selected_model>")
