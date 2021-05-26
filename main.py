@@ -57,14 +57,15 @@ def getSuggestionsFromSentence():
         content = content.decode("utf8")
         content_dir = json.loads(content)
         try:
-            evaluate_sim_word = content_dir["addsynonyms"]
+            evaluate_sim_word = content_dir["expand"]
             suggestions = core.get_suggestions_from_sentence(sentences=content_dir["sentences"],
                                                              evaluate_sim_word=evaluate_sim_word)
             return jsonify(results=suggestions)
         except Exception:
             try:
                 suggestions = core.get_suggestions_from_sentence(sentences=content_dir["sentences"],
-                                                                 evaluate_sim_word=True)
+                                                                 evaluate_sim_word=False
+                                                                 )
                 return jsonify(results=suggestions)
             except Exception:
                 suggestions = "Format Error"
