@@ -19,7 +19,7 @@ global __tfidf_model__, __tfidf_index__, __tfidf_dictionary__
 global __tokenized_plots__, __films_IDs__, __films_titles__, __films_cast__, __films_genres__, __films_directors__
 global __id_Model__  # il numero che identifica il modello selezionato
 global __returned_queue__  # returned_queue.get()
-global __queue_nlp__, __npl__, __local_w2v__
+global __queue_nlp__, __npl__, __local_w2v__, __started_thread__
 
 __CUSTOM_FILTERS__ = [lambda x: x.lower(), __pp__.strip_tags,
                       __pp__.strip_punctuation,
@@ -34,6 +34,8 @@ def __preprocessing__(trama):
 
 
 def __pre_load__():
+    global __queue_nlp__, __npl__, __local_w2v__, __started_thread__
+    __started_thread__ = True
     global __queue_nlp__
     try:
         if __local_w2v__ is not None and __npl__ is not None:
@@ -138,7 +140,7 @@ def select_model(selected_model):
     global __tokenized_plots__, __films_IDs__, __films_titles__, __films_cast__, __films_genres__, __films_directors__
     global __id_Model__
     global __returned_queue__
-    global __queue_nlp__, __npl__, __local_w2v__
+    global __queue_nlp__, __npl__, __local_w2v__, __started_thread__
     __queue_nlp__ = queue.Queue()
     try:
         if __tokenized_plots__ is not None and __films_IDs__ is not None and __films_titles__ is not None:
@@ -166,7 +168,13 @@ def select_model(selected_model):
         else:
             __most_similar__ = False
         __id_Model__ = selected_model
-        threading.Thread(target=__pre_load__).start()
+        try:
+            if __started_thread__:
+                return 200
+            else:
+                raise Exception
+        except Exception:
+            threading.Thread(target=__pre_load__).start()
         return 200
     # Selezione del modello WORD2VEC
     if selected_model == 3 or selected_model == 4:
@@ -188,7 +196,13 @@ def select_model(selected_model):
                                             __w2c_pre_trained__, __returned_queue__))
             thread.start()
         __id_Model__ = selected_model
-        threading.Thread(target=__pre_load__).start()
+        try:
+            if __started_thread__:
+                return 200
+            else:
+                raise Exception
+        except Exception:
+            threading.Thread(target=__pre_load__).start()
         return 200
     # Selezione del modello FASTTEXT
     if selected_model == 5 or selected_model == 6:
@@ -220,7 +234,13 @@ def select_model(selected_model):
                                                                           __returned_queue__))
                 thread.start()
         __id_Model__ = selected_model
-        threading.Thread(target=__pre_load__).start()
+        try:
+            if __started_thread__:
+                return 200
+            else:
+                raise Exception
+        except Exception:
+            threading.Thread(target=__pre_load__).start()
         return 200
     # Selezione del modello __tfidf__
     if selected_model == 7:
@@ -242,7 +262,13 @@ def select_model(selected_model):
                                             __returned_queue__))
             thread.start()
         __id_Model__ = selected_model
-        threading.Thread(target=__pre_load__).start()
+        try:
+            if __started_thread__:
+                return 200
+            else:
+                raise Exception
+        except Exception:
+            threading.Thread(target=__pre_load__).start()
         return 200
     else:
         __tokenized_plots__ = None
@@ -251,7 +277,7 @@ def select_model(selected_model):
         return 404  # MODELLO NON TROVATO
 
 
-def get_suggestions_from_sentence(sentences, evaluate_sim_word):
+def get_suggestions_from_sentence(sentences, evaluate_sim_word, pref_entity):
     recommends_from_senteces = []
     if len(sentences) > 0:
         recommends_from_senteces = __get_suggestion_from_sentence__(senteces=sentences,
@@ -261,9 +287,29 @@ def get_suggestions_from_sentence(sentences, evaluate_sim_word):
             recommends_from_senteces.append({"Rank": i + 1, "ID": __films_IDs__[i], "Value": 0})
     list_value = []
     list_IDs = []
-    for i in range(len(recommends_from_senteces)):
-        list_IDs.append(recommends_from_senteces[i]["ID"])
-        list_value.append(recommends_from_senteces[i]["Value"])
+    value_cos_temp = list()
+    recommends_from_entity = list()
+    if len(pref_entity) > 0:
+        for i in range(len(__films_IDs__)):
+            value_cos_temp.append(recommends_from_senteces[i]["Value"] + 0.1)
+        recommends_from_entity = __get_suggestion_from_entity__(pref_entity, films_IDs=__films_IDs__,
+                                                                films_cast=__films_cast__,
+                                                                films_genres=__films_genres__,
+                                                                films_directors=__films_directors__,
+                                                                film_values=value_cos_temp)
+    else:
+        for i in range(len(__films_IDs__)):
+            recommends_from_entity.append({"Rank": i + 1, "ID": __films_IDs__[i], "Value": 0})
+    if len(value_cos_temp) == 0:
+        for i in range(len(__films_IDs__)):
+            if recommends_from_senteces[i]["ID"] == recommends_from_entity[i]["ID"]:
+                list_IDs.append(recommends_from_senteces[i]["ID"])
+                list_value.append(
+                    recommends_from_senteces[i]["Value"] + recommends_from_entity[i]["Value"])
+    else:
+        for i in range(len(__films_IDs__)):
+            list_IDs.append(recommends_from_entity[i]["ID"])
+            list_value.append(recommends_from_entity[i]["Value"])
     value, IDs = zip(*sorted(zip(list_value, list_IDs), reverse=True))
     recommends_entity = list()
     output_to_print = list()
@@ -523,9 +569,13 @@ def __get_suggestion_from_sentence__(senteces, evaluate_sim_word):
             for sentence in senteces:
                 doc = __npl__(sentence)
                 nouns = []
+                singles= list()
                 for ent in doc.ents:
+                    singles = singles + str(ent).split(" ")
                     nouns.append(str(ent))
                 for token in doc:
+                    if str(token) in singles:
+                        continue
                     if token.lemma_ in ["film", "movie", "like", "love", "appreciate", "I"] or token.is_stop or token.is_punct:
                         continue
                     if evaluate_sim_word:

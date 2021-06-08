@@ -59,11 +59,13 @@ def getSuggestionsFromSentence():
         try:
             evaluate_sim_word = content_dir["expand"]
             suggestions = core.get_suggestions_from_sentence(sentences=content_dir["sentences"],
+                                                             pref_entity=content_dir["entities"],
                                                              evaluate_sim_word=evaluate_sim_word)
             return jsonify(results=suggestions)
         except Exception:
             try:
                 suggestions = core.get_suggestions_from_sentence(sentences=content_dir["sentences"],
+                                                                 pref_entity=content_dir["entities"],
                                                                  evaluate_sim_word=False
                                                                  )
                 return jsonify(results=suggestions)
