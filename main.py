@@ -81,4 +81,4 @@ def getSuggestionsFromSentence():
 
 
 if __name__ == '__main__':
-    __app__.run()
+    __app__.run(host='0.0.0.0')
