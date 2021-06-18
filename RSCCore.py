@@ -327,7 +327,7 @@ def get_suggestions_from_sentence(sentences, evaluate_sim_word, pref_entity):
 # NB: Anche se è una preferenza, deve essere una lista.
 # In caso non sia sata chiamata la funzione select_model() allora __film_IDs è null quindi si sollega l'eccezione per
 # cui sarà restituito "ERROR_FILM_NOT_FOUND"
-def get_suggestion(preferences_IDs, pref_entity, movie_to_ignore, negative_entity):
+def get_suggestion(preferences_IDs, pref_entity, movie_to_ignore, negative_entity, rec_list_size):
     global __tokenized_plots__, __films_IDs__, __films_titles__, __films_cast__, __films_genres__, __films_directors__
     IDs_pref = list()
     tokenized_pref = list()
@@ -376,10 +376,10 @@ def get_suggestion(preferences_IDs, pref_entity, movie_to_ignore, negative_entit
     value, IDs = zip(*sorted(zip(list_value, list_IDs), reverse=True))
     recommends_entity = list()
     output_to_print = list()
-    for i in range(5 + len(IDs_pref) + len(movie_to_ignore)):
+    for i in range(rec_list_size + len(IDs_pref) + len(movie_to_ignore)):
         if IDs[i] in IDs_pref or IDs[i] in movie_to_ignore:
             continue
-        if len(recommends_entity) == 5:
+        if len(recommends_entity) == rec_list_size:
             break
         recommends_entity.append({"Rank": len(recommends_entity) + 1, "ID": IDs[i]})
         output_to_print.append(

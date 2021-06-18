@@ -16,8 +16,9 @@ def get_suggestions():
         try:
             suggestions = core.get_suggestion(preferences_IDs=content_dir["movies"],
                                               pref_entity=content_dir["entities"],
-                                              movie_to_ignore= content_dir["movietoIgnore"],
-                                              negative_entity = content_dir["negativeEntity"])
+                                              movie_to_ignore=content_dir["movietoIgnore"],
+                                              negative_entity=content_dir["negativeEntity"],
+                                              rec_list_size= content_dir["recListSize"])
             print("film", content_dir["movies"])
             print("filmIGNORE", content_dir["movietoIgnore"])
             print("entities", content_dir["entities"])
