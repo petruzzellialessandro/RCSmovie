@@ -327,7 +327,7 @@ def get_suggestions_from_sentence(sentences, evaluate_sim_word, pref_entity):
 # NB: Anche se è una preferenza, deve essere una lista.
 # In caso non sia sata chiamata la funzione select_model() allora __film_IDs è null quindi si sollega l'eccezione per
 # cui sarà restituito "ERROR_FILM_NOT_FOUND"
-def get_suggestion(preferences_IDs, pref_entity):
+def get_suggestion(preferences_IDs, pref_entity, movie_to_ignore, negative_entity):
     global __tokenized_plots__, __films_IDs__, __films_titles__, __films_cast__, __films_genres__, __films_directors__
     IDs_pref = list()
     tokenized_pref = list()
@@ -349,14 +349,15 @@ def get_suggestion(preferences_IDs, pref_entity):
             recommends_from_movie.append({"Rank": i + 1, "ID": __films_IDs__[i], "Value": 0})
 
     value_cos_temp = []
-    if len(pref_entity) > 0:
+    if len(pref_entity) > 0 or len(negative_entity) > 0:
         for i in range(len(__films_IDs__)):
             value_cos_temp.append(recommends_from_movie[i]["Value"] + 0.1)
         recommends_from_entity = __get_suggestion_from_entity__(pref_entity, films_IDs=__films_IDs__,
                                                                 films_cast=__films_cast__,
                                                                 films_genres=__films_genres__,
                                                                 films_directors=__films_directors__,
-                                                                film_values=value_cos_temp)
+                                                                film_values=value_cos_temp,
+                                                                neg_entities=negative_entity)
     else:
         for i in range(len(__films_IDs__)):
             recommends_from_entity.append({"Rank": i + 1, "ID": __films_IDs__[i], "Value": 0})
@@ -375,8 +376,8 @@ def get_suggestion(preferences_IDs, pref_entity):
     value, IDs = zip(*sorted(zip(list_value, list_IDs), reverse=True))
     recommends_entity = list()
     output_to_print = list()
-    for i in range(5 + len(IDs_pref)):
-        if IDs[i] in IDs_pref:
+    for i in range(5 + len(IDs_pref) + len(movie_to_ignore)):
+        if IDs[i] in IDs_pref or IDs[i] in movie_to_ignore:
             continue
         if len(recommends_entity) == 5:
             break
@@ -596,9 +597,8 @@ def __get_suggestion_from_sentence__(senteces, evaluate_sim_word):
             return 400
 
 
-def __get_suggestion_from_entity__(entities, films_IDs, films_cast, films_genres, films_directors, film_values):
+def __get_suggestion_from_entity__(entities, films_IDs, films_cast, films_genres, films_directors, film_values, neg_entities):
     recommend_movies = []
-    print(entities)
     # mean_value = numpy.mean(film_values)
     for i, ID in enumerate(films_IDs):
         sim_value = film_values[i]
@@ -606,6 +606,8 @@ def __get_suggestion_from_entity__(entities, films_IDs, films_cast, films_genres
         for entity in entities:
             if entity in films_entities:
                 sim_value += film_values[i] * 0.4
+            if entity in neg_entities:
+                sim_value -= film_values[i] * 0.4
         recommend_movies.append({"Rank": i + 1, "ID": ID, "Value": sim_value})
     return recommend_movies
 
@@ -621,7 +623,7 @@ if __name__ == '__main__':
     select_model(7)
     # "Q172975", "Q26698156", "Q182254"
     # "Q40831", "Q157443", "Q193815", "Q132952"
-    get_suggestion(preferences_IDs=[], pref_entity=[])
+    get_suggestion(preferences_IDs=[], pref_entity=[], negative_entity=[], movie_to_ignore=[])
 #     # Q102244-Q102438 Harry Potter 1-2
 #     # Q192724-Q163872 Iron Man-Cavalire Oscuro #TFIDF forse dovuta alla lunghezza della trama di Batman rispetto
 #     # Q190525-Q220713 Memento-American Pie

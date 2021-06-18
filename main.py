@@ -15,7 +15,13 @@ def get_suggestions():
         content_dir = json.loads(content)
         try:
             suggestions = core.get_suggestion(preferences_IDs=content_dir["movies"],
-                                              pref_entity=content_dir["entities"])
+                                              pref_entity=content_dir["entities"],
+                                              movie_to_ignore= content_dir["movietoIgnore"],
+                                              negative_entity = content_dir["negativeEntity"])
+            print("film", content_dir["movies"])
+            print("filmIGNORE", content_dir["movietoIgnore"])
+            print("entities", content_dir["entities"])
+            print("negativeEntity", content_dir["negativeEntity"])
             return jsonify(results=suggestions)
         except Exception:
             suggestions = "Format Error"
