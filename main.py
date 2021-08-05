@@ -18,7 +18,7 @@ def get_suggestions():
                                               pref_entity=content_dir["entities"],
                                               movie_to_ignore=content_dir["movietoIgnore"],
                                               negative_entity=content_dir["negativeEntity"],
-                                              rec_list_size= content_dir["recListSize"])
+                                              rec_list_size=content_dir["recListSize"])
             print("film", content_dir["movies"])
             print("filmIGNORE", content_dir["movietoIgnore"])
             print("entities", content_dir["entities"])
@@ -67,13 +67,20 @@ def getSuggestionsFromSentence():
             evaluate_sim_word = content_dir["expand"]
             suggestions = core.get_suggestions_from_sentence(sentences=content_dir["sentences"],
                                                              pref_entity=content_dir["entities"],
-                                                             evaluate_sim_word=evaluate_sim_word)
+                                                             evaluate_sim_word=evaluate_sim_word,
+                                                             rec_list_size=content_dir["recListSize"],
+                                                             movie_to_ignore=content_dir["movietoIgnore"],
+                                                             negative_entity=content_dir["negativeEntity"],
+                                                             )
             return jsonify(results=suggestions)
         except Exception:
             try:
                 suggestions = core.get_suggestions_from_sentence(sentences=content_dir["sentences"],
                                                                  pref_entity=content_dir["entities"],
-                                                                 evaluate_sim_word=False
+                                                                 evaluate_sim_word=False,
+                                                                 rec_list_size=content_dir["recListSize"],
+                                                                 movie_to_ignore=content_dir["movietoIgnore"],
+                                                                 negative_entity=content_dir["negativeEntity"],
                                                                  )
                 return jsonify(results=suggestions)
             except Exception:

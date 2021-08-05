@@ -1,5 +1,6 @@
 import csv
 import queue
+import sys
 import threading
 
 import gensim.parsing.preprocessing as __pp__
@@ -11,6 +12,18 @@ import Models.Doc2Vec.Doc2Vec as __d2v__
 import Models.FastText.FastText as __ft__
 import Models.TFIDF.TFIDF as __tfidf__
 import Models.Word2Vec.Word2Vec as __w2v__
+
+maxInt = sys.maxsize
+
+while True:
+    # decrease the maxInt value by factor 10
+    # as long as the OverflowError occurs.
+
+    try:
+        csv.field_size_limit(maxInt)
+        break
+    except OverflowError:
+        maxInt = int(maxInt/10)
 
 global __doc2vec__, __most_similar__
 global __word2vec__, __w2c_pre_trained__
@@ -277,7 +290,8 @@ def select_model(selected_model):
         return 404  # MODELLO NON TROVATO
 
 
-def get_suggestions_from_sentence(sentences, evaluate_sim_word, pref_entity):
+def get_suggestions_from_sentence(sentences, evaluate_sim_word, pref_entity, rec_list_size, movie_to_ignore,
+                                  negative_entity):
     recommends_from_senteces = []
     if len(sentences) > 0:
         recommends_from_senteces = __get_suggestion_from_sentence__(senteces=sentences,
@@ -296,7 +310,8 @@ def get_suggestions_from_sentence(sentences, evaluate_sim_word, pref_entity):
                                                                 films_cast=__films_cast__,
                                                                 films_genres=__films_genres__,
                                                                 films_directors=__films_directors__,
-                                                                film_values=value_cos_temp)
+                                                                film_values=value_cos_temp,
+                                                                neg_entities=negative_entity)
     else:
         for i in range(len(__films_IDs__)):
             recommends_from_entity.append({"Rank": i + 1, "ID": __films_IDs__[i], "Value": 0})
@@ -313,9 +328,14 @@ def get_suggestions_from_sentence(sentences, evaluate_sim_word, pref_entity):
     value, IDs = zip(*sorted(zip(list_value, list_IDs), reverse=True))
     recommends_entity = list()
     output_to_print = list()
-    for i in range(5):
+    for i in range(rec_list_size + len(pref_entity) + len(movie_to_ignore)):
+        if IDs[i] in pref_entity or IDs[i] in movie_to_ignore:
+            continue
+        if len(recommends_entity) == rec_list_size:
+            break
         recommends_entity.append({"Rank": len(recommends_entity) + 1, "ID": IDs[i]})
-        output_to_print.append([i + 1, __films_titles__[__films_IDs__.index(IDs[i])], value[i], IDs[i]])
+        output_to_print.append(
+            [len(recommends_entity) + 1, __films_titles__[__films_IDs__.index(IDs[i])], value[i], IDs[i]])
     print("--------------" + str(__id_Model__) + "--------------")
     df = pd.DataFrame(output_to_print, columns=["rank", "title", "cosine_similarity", "ID"])
     pd.set_option("display.max_rows", None, "display.max_columns", None)
@@ -570,14 +590,15 @@ def __get_suggestion_from_sentence__(senteces, evaluate_sim_word):
             for sentence in senteces:
                 doc = __npl__(sentence)
                 nouns = []
-                singles= list()
+                singles = list()
                 for ent in doc.ents:
                     singles = singles + str(ent).split(" ")
                     nouns.append(str(ent))
                 for token in doc:
                     if str(token) in singles:
                         continue
-                    if token.lemma_ in ["film", "movie", "like", "love", "appreciate", "I"] or token.is_stop or token.is_punct:
+                    if token.lemma_ in ["film", "movie", "like", "love", "appreciate",
+                                        "I"] or token.is_stop or token.is_punct:
                         continue
                     if evaluate_sim_word:
                         try:
@@ -597,7 +618,8 @@ def __get_suggestion_from_sentence__(senteces, evaluate_sim_word):
             return 400
 
 
-def __get_suggestion_from_entity__(entities, films_IDs, films_cast, films_genres, films_directors, film_values, neg_entities):
+def __get_suggestion_from_entity__(entities, films_IDs, films_cast, films_genres, films_directors, film_values,
+                                   neg_entities):
     recommend_movies = []
     # mean_value = numpy.mean(film_values)
     for i, ID in enumerate(films_IDs):
@@ -613,20 +635,39 @@ def __get_suggestion_from_entity__(entities, films_IDs, films_cast, films_genres
 
 
 if __name__ == '__main__':
-    #    preferences = list()
+    preferences = list()
     # with open("""C:\\Users\petru\Documents\Tesi\createProfile\\the_godfather_test.csv""",  newline='', encoding="utf8") as csvfile:
     #     reader = csv.DictReader(csvfile)
     #     for row in reader:
     #         preferences.append(row["ID"])
     # csvfile.close()
     # for i in range(1, 8):
-    select_model(7)
+
+    #ADDESTRAMENTO D2V
+    pp_docs, IDs, titles, cast, genres, directors = __tonkens_from_documents_gensim__()
+    __d2v__.load_model(pp_docs, "Models/Doc2Vec/doc2vec_model")
+
+    # ADDESTRAMENTO FastText
+    # pp_docs, IDs, titles, cast, genres, directors = __tonkens_from_documents_gensim__()
+    # __ft__.load_model(pp_docs, "Models/FastText/fasttext_model")
+
+    # ADDESTRAMENTO TFIDF
+    # pp_docs, IDs, titles, cast, genres, directors = __tonkens_from_documents_gensim__()
+    # __tfidf__.load_model(pp_docs, "Models/TFIDF/tfidf_model",
+    #                                                    "Models/TFIDF/matrix_tfidf",
+    #                                                    "Models/TFIDF/dictionary_tfidf"))
+
+    # ADDESTRAMENTO W2V
+    # pp_docs, IDs, titles, cast, genres, directors = __tonkens_from_documents_gensim__()
+    # __w2v__.load_model(pp_docs, "Models\Word2Vec\word2vec_model")
+
     # "Q172975", "Q26698156", "Q182254"
     # "Q40831", "Q157443", "Q193815", "Q132952"
-    get_suggestion(preferences_IDs=[], pref_entity=[], negative_entity=[], movie_to_ignore=[])
+    # get_suggestion(preferences_IDs=[], pref_entity=[], negative_entity=[], movie_to_ignore=[])
 #     # Q102244-Q102438 Harry Potter 1-2
 #     # Q192724-Q163872 Iron Man-Cavalire Oscuro #TFIDF forse dovuta alla lunghezza della trama di Batman rispetto
 #     # Q190525-Q220713 Memento-American Pie
 #     # Q47075-Q36479 Scarface-Re Leone
 #     # Q13099455-Q27894574-Q63985561-Q274167-Q219315 Maze Runner-Bohemian Rhapsody-Tenet-L'esorcista-Hangover
 #     # Q155476-Q1392744-Q188652-Q1930376-Q483815 The Fast and the Furious-The Wolf of Wall Street-Rocky-Classic Albums: Nirvana – Nevermind-Shrek
+
