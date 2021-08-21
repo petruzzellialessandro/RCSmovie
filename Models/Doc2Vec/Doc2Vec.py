@@ -11,19 +11,19 @@ def calculate_centroid(text, model):
             vector = model[word]
             vectors.append(vector)
         except Exception:
-            # print(word, " non c'è")
+            print(word, " non c'è")
             continue
     if vectors:
         return np.asarray(vectors).mean(axis=0)
-    return np.array([])
+    return np.array([0])
 
 
 def create_model_doc2vec(documents, model_name):
     tagged_documents = []
     for i, doc in enumerate(documents):
         tagged_documents.append(TaggedDocument(doc, [i]))
-    doc2vec = Doc2Vec(tagged_documents, vector_size=100, min_count=3, workers=8, epochs=100)
-    # doc2vec.build_vocab(tagged_documents)
+    doc2vec = Doc2Vec(tagged_documents, vector_size=100, min_count=1, workers=8, epochs=100)
+    doc2vec.build_vocab(tagged_documents)
     doc2vec.train(tagged_documents, total_examples=doc2vec.corpus_count, epochs=doc2vec.epochs)
     doc2vec.save(model_name)
     return doc2vec

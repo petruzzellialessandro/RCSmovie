@@ -174,7 +174,8 @@ def select_model(selected_model):
             else:
                 raise Exception
         except Exception:
-            threading.Thread(target=__pre_load__).start()
+            print('')
+            #threading.Thread(target=__pre_load__).start()
         return 200
     # Selezione del modello WORD2VEC
     if selected_model == 3 or selected_model == 4:
@@ -202,7 +203,8 @@ def select_model(selected_model):
             else:
                 raise Exception
         except Exception:
-            threading.Thread(target=__pre_load__).start()
+            print('')
+           # threading.Thread(target=__pre_load__).start()
         return 200
     # Selezione del modello FASTTEXT
     if selected_model == 5 or selected_model == 6:
@@ -240,7 +242,8 @@ def select_model(selected_model):
             else:
                 raise Exception
         except Exception:
-            threading.Thread(target=__pre_load__).start()
+            print('')
+            #threading.Thread(target=__pre_load__).start()
         return 200
     # Selezione del modello __tfidf__
     if selected_model == 7:
@@ -268,7 +271,8 @@ def select_model(selected_model):
             else:
                 raise Exception
         except Exception:
-            threading.Thread(target=__pre_load__).start()
+            print('')
+            #threading.Thread(target=__pre_load__).start()
         return 200
     else:
         __tokenized_description__ = None
@@ -334,12 +338,13 @@ def get_suggestion(preferences_IDs, pref_entity, movie_to_ignore, negative_entit
     if len(preferences_IDs) + len(pref_entity) == 0:
         return 400
     for id in preferences_IDs:
-        try:
+       try:
             index = __books_IDs__.index(id)
             IDs_pref.append(id)
             tokenized_pref.append(__tokenized_description__[index])
-        except Exception:
-            return 400  # Film non trovato
+       except Exception:
+           print(id + ' non trovato')
+           continue  # Film non trovato
     recommends_from_movie = []
     recommends_from_entity = []
     if len(preferences_IDs) > 0:
@@ -612,9 +617,28 @@ def __get_suggestion_from_entity__(entities, films_IDs, films_cast, films_genres
     return recommend_movies
 
 
-if __name__ == '__main__':
-    pp_docs, IDs, titles, subjects, genres, authors =  __tonkens_from_documents_gensim__()
-    __d2v__.create_model_doc2vec(pp_docs, 'Models/Doc2Vec/doc2vec_model')
+#if __name__ == '__main__':
+
+    # ADDESTRAMENTO D2V
+    #pp_docs, IDs, titles, subjects, genres, authors = __tonkens_from_documents_gensim__()
+    #__d2v__.load_model(pp_docs, "Models/Doc2Vec/doc2vec_model")
+
+    # ADDESTRAMENTO FastText
+    #pp_docs, IDs, titles, subjects, genres, authors =__tonkens_from_documents_gensim__()
+    #__ft__.load_model(pp_docs, "Models/FastText/fasttext_model")
+
+    # ADDESTRAMENTO TFIDF
+    # pp_docs, IDs, titles, subjects, genres, authors =  __tonkens_from_documents_gensim__()
+    # __tfidf__.load_model(pp_docs, "Models/TFIDF/tfidf_model",
+    #                                                   "Models/TFIDF/matrix_tfidf",
+    #                                                    "Models/TFIDF/dictionary_tfidf")
+
+    # ADDESTRAMENTO W2V
+    # pp_docs, IDs, titles, subjects, genres, authors =  __tonkens_from_documents_gensim__()
+    # __w2v__.load_model(pp_docs, "Models\Word2Vec\word2vec_model",pretrained=False)
+
+
+
     #    preferences = list()
     # with open("""C:\\Users\petru\Documents\Tesi\createProfile\\the_godfather_test.csv""",  newline='', encoding="utf8") as csvfile:
     #     reader = csv.DictReader(csvfile)
@@ -624,7 +648,7 @@ if __name__ == '__main__':
     # for i in range(1, 8):
    # select_model(7)
     # "Q172975", "Q26698156", "Q182254"
-    # "Q40831", "Q157443", "Q193815", "Q132952"
+    # "Q40831", "Q157443", "Q193815", "Q1329
     #get_suggestion(preferences_IDs=[], pref_entity=[], negative_entity=[], movie_to_ignore=[])
 #     # Q102244-Q102438 Harry Potter 1-2
 #     # Q192724-Q163872 Iron Man-Cavalire Oscuro #TFIDF forse dovuta alla lunghezza della trama di Batman rispetto

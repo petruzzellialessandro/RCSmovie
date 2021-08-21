@@ -13,20 +13,20 @@ def get_suggestions():
         content = request.get_data()
         content = content.decode("utf8")
         content_dir = json.loads(content)
-        try:
-            suggestions = core.get_suggestion(preferences_IDs=content_dir["movies"],
+        #try:
+        suggestions = core.get_suggestion(preferences_IDs=content_dir["movies"],
                                               pref_entity=content_dir["entities"],
                                               movie_to_ignore=content_dir["movietoIgnore"],
                                               negative_entity=content_dir["negativeEntity"],
                                               rec_list_size= content_dir["recListSize"])
-            print("film", content_dir["movies"])
-            print("filmIGNORE", content_dir["movietoIgnore"])
-            print("entities", content_dir["entities"])
-            print("negativeEntity", content_dir["negativeEntity"])
-            return jsonify(results=suggestions)
-        except Exception:
-            suggestions = "Format Error"
-            return jsonify(results=suggestions)
+        print("book", content_dir["movies"])
+        print("bookIGNORE", content_dir["movietoIgnore"])
+        print("entities", content_dir["entities"])
+        print("negativeEntity", content_dir["negativeEntity"])
+        return jsonify(results=suggestions)
+       # except Exception:
+            #suggestions = "Format Error"
+        # return jsonify(results=suggestions)
 
 
 @__app__.route("/selectModel/<int:selected_model>")

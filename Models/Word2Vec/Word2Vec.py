@@ -24,7 +24,7 @@ def calculate_centroid(text, model):
 
 
 def create_model_word2vec(documents, model_name):
-    word2vec = Word2Vec(size=100, min_count=1, workers=8)
+    word2vec = Word2Vec(min_count=1, workers=8)
     word2vec.build_vocab(documents)
     word2vec.train(documents, epochs=100, total_examples=word2vec.corpus_count)
     word2vec.save(model_name)

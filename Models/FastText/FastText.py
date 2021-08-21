@@ -43,7 +43,7 @@ def create_model_fasttext_fb(model, queue=None):
 
 
 def create_model_fasttext(documents, model_name):
-    fasttext = FastText(min_count=1, workers=8, size=100)
+    fasttext = FastText(min_count=1, workers=8)
     fasttext.build_vocab(documents)
     fasttext.train(documents, total_examples=fasttext.corpus_count, epochs=100)
     fasttext.save(model_name)
