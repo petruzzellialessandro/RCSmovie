@@ -2,11 +2,13 @@ import csv
 import queue
 import sys
 import threading
+from idlelib import query
 
 import gensim.parsing.preprocessing as __pp__
 import numpy
 import pandas as pd
 import spacy
+from scipy.spatial import distance
 
 import Models.Doc2Vec.Doc2Vec as __d2v__
 import Models.FastText.FastText as __ft__
@@ -23,7 +25,7 @@ while True:
         csv.field_size_limit(maxInt)
         break
     except OverflowError:
-        maxInt = int(maxInt/10)
+        maxInt = int(maxInt / 10)
 
 global __doc2vec__, __most_similar__
 global __word2vec__, __w2c_pre_trained__
@@ -57,8 +59,8 @@ def __pre_load__():
             raise Exception
     except Exception:
         nlp = spacy.load("en_core_web_sm")
-        w2v = __w2v__.load_model(None, None, True)
-        __queue_nlp__.put([nlp, w2v])
+        # w2v = __w2v__.load_model(None, None, True)
+        __queue_nlp__.put([nlp, None])
         return
 
 
@@ -582,6 +584,8 @@ def __get_suggestion_from_sentence__(senteces, evaluate_sim_word):
                 raise Exception
     except Exception:
         if not already_loaded:
+            __queue_nlp__ = queue.Queue()
+            __pre_load__()
             returned_value = __queue_nlp__.get()
             __npl__ = returned_value[0]
             __local_w2v__ = returned_value[1]
@@ -597,8 +601,12 @@ def __get_suggestion_from_sentence__(senteces, evaluate_sim_word):
                 for token in doc:
                     if str(token) in singles:
                         continue
+                    if token.pos_ == "VERB":
+                        verb_vector = token.vector
+                        print("like", str(token), token.similarity(__npl__("like")))
+                        print("dislike", str(token), token.similarity(__npl__("dislike")))
                     if token.lemma_ in ["film", "movie", "like", "love", "appreciate",
-                                        "I"] or token.is_stop or token.is_punct:
+                                        "I", "don't", "dislike"] or token.is_stop or token.is_punct:
                         continue
                     if evaluate_sim_word:
                         try:
@@ -610,9 +618,9 @@ def __get_suggestion_from_sentence__(senteces, evaluate_sim_word):
                     nouns.append(token.lemma_)
                 complete_words.append(nouns)
             print(complete_words)
-            recommends = __get_rec__(None, complete_words)
+            # recommends = __get_rec__(None, complete_words)
             # recommends = __get_rec__(None, __preprocessing__(sentence))
-            return recommends
+            return  # recommends
         except Exception as e:
             print(str(e))
             return 400
@@ -636,6 +644,8 @@ def __get_suggestion_from_entity__(entities, films_IDs, films_cast, films_genres
 
 if __name__ == '__main__':
     preferences = list()
+
+    __get_suggestion_from_sentence__(["I hate Alessio Pagliarulo"], False)
     # with open("""C:\\Users\petru\Documents\Tesi\createProfile\\the_godfather_test.csv""",  newline='', encoding="utf8") as csvfile:
     #     reader = csv.DictReader(csvfile)
     #     for row in reader:
@@ -643,9 +653,9 @@ if __name__ == '__main__':
     # csvfile.close()
     # for i in range(1, 8):
 
-    #ADDESTRAMENTO D2V
-    pp_docs, IDs, titles, cast, genres, directors = __tonkens_from_documents_gensim__()
-    __d2v__.load_model(pp_docs, "Models/Doc2Vec/doc2vec_model")
+    # ADDESTRAMENTO D2V
+    # pp_docs, IDs, titles, cast, genres, directors = __tonkens_from_documents_gensim__()
+    # __d2v__.load_model(pp_docs, "Models/Doc2Vec/doc2vec_model")
 
     # ADDESTRAMENTO FastText
     # pp_docs, IDs, titles, cast, genres, directors = __tonkens_from_documents_gensim__()
@@ -655,11 +665,11 @@ if __name__ == '__main__':
     # pp_docs, IDs, titles, cast, genres, directors = __tonkens_from_documents_gensim__()
     # __tfidf__.load_model(pp_docs, "Models/TFIDF/tfidf_model",
     #                                                    "Models/TFIDF/matrix_tfidf",
-    #                                                    "Models/TFIDF/dictionary_tfidf"))
+    #                                                    "Models/TFIDF/dictionary_tfidf")
 
     # ADDESTRAMENTO W2V
     # pp_docs, IDs, titles, cast, genres, directors = __tonkens_from_documents_gensim__()
-    # __w2v__.load_model(pp_docs, "Models\Word2Vec\word2vec_model")
+    # __w2v__.load_model(pp_docs, "Models\Word2Vec\word2vec_model", False)
 
     # "Q172975", "Q26698156", "Q182254"
     # "Q40831", "Q157443", "Q193815", "Q132952"
@@ -670,4 +680,3 @@ if __name__ == '__main__':
 #     # Q47075-Q36479 Scarface-Re Leone
 #     # Q13099455-Q27894574-Q63985561-Q274167-Q219315 Maze Runner-Bohemian Rhapsody-Tenet-L'esorcista-Hangover
 #     # Q155476-Q1392744-Q188652-Q1930376-Q483815 The Fast and the Furious-The Wolf of Wall Street-Rocky-Classic Albums: Nirvana – Nevermind-Shrek
-
