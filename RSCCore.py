@@ -58,7 +58,7 @@ def __pre_load__():
         else:
             raise Exception
     except Exception:
-        nlp = spacy.load("en_core_web_sm")
+        nlp = spacy.load("en_core_web_md")
         # w2v = __w2v__.load_model(None, None, True)
         __queue_nlp__.put([nlp, None])
         return
@@ -464,7 +464,7 @@ def __calculate_entity_bias__(IDs_pref, recommends):
 
 # Funzione che effettivamente si occupa di generare le raccomandazioni in base al modello.
 # DA NON CHIAMARE
-def __get_rec__(IDs_pref, tokenized_pref):
+def __get_rec__(IDs_pref, tokenized_pref, neg_tokenized_pref):
     global __tokenized_plots__, __films_IDs__, __films_titles__
     global __id_Model__
     global __returned_queue__
@@ -481,7 +481,7 @@ def __get_rec__(IDs_pref, tokenized_pref):
         recommends = __d2v__.get_recommendations_doc2vec(token_strings=tokenized_pref, documents=__tokenized_plots__,
                                                          titles=__films_titles__, IDs=__films_IDs__,
                                                          modelDoC=__doc2vec__,
-                                                         most_similar=__most_similar__, prefIDs=IDs_pref)
+                                                         most_similar=__most_similar__, prefIDs=IDs_pref, neg_pref=neg_tokenized_pref)
     elif __id_Model__ == 3 or __id_Model__ == 4:
         global __word2vec__, __w2c_pre_trained__
         try:
@@ -590,37 +590,73 @@ def __get_suggestion_from_sentence__(senteces, evaluate_sim_word):
             __npl__ = returned_value[0]
             __local_w2v__ = returned_value[1]
         try:
-            complete_words = []
+            positive_complete_words = []
+            negative_complete_words = []
             for sentence in senteces:
+                negative = False
                 doc = __npl__(sentence)
-                nouns = []
+                negative_nouns = []
+                positive_nouns = []
+                sim_like = 1
+                sim_dislike = 0
+                sim_words = []
                 singles = list()
+                entities = []
+                all_nouns = []
                 for ent in doc.ents:
                     singles = singles + str(ent).split(" ")
-                    nouns.append(str(ent))
+                    entities.append(str(ent))
                 for token in doc:
+                    if token.dep_ == "neg" or token.lemma_ == "without":
+                        negative = True
                     if str(token) in singles:
                         continue
-                    if token.pos_ == "VERB":
-                        verb_vector = token.vector
+                    if token.dep_ == "ROOT":
+
                         print("like", str(token), token.similarity(__npl__("like")))
                         print("dislike", str(token), token.similarity(__npl__("dislike")))
+                        sim_like = token.similarity(__npl__("like"))
+                        sim_dislike = token.similarity(__npl__("dislike"))
+
                     if token.lemma_ in ["film", "movie", "like", "love", "appreciate",
-                                        "I", "don't", "dislike"] or token.is_stop or token.is_punct:
+                                        "I", "don't", "dislike"] or token.is_stop or token.is_punct or token.dep_ in ["neg", "ROOT"]:
                         continue
                     if evaluate_sim_word:
                         try:
                             sim_words = __local_w2v__.most_similar(token.lemma_, topn=5)
                         except Exception:
                             continue
+
+                    all_nouns.append(token.lemma_)
+                if negative:
+                    sim_like = 1-sim_like
+                    sim_dislike = 1-sim_dislike
+                if sim_like > sim_dislike:
+                    for nouns in all_nouns:
+                        positive_nouns.append(nouns)
+                    if len(sim_words) > 0:
                         for word in sim_words:
-                            nouns.append(word[0])
-                    nouns.append(token.lemma_)
-                complete_words.append(nouns)
-            print(complete_words)
-            # recommends = __get_rec__(None, complete_words)
+                            positive_nouns.append(word[0])
+                else:
+                    for nouns in all_nouns:
+                        negative_nouns.append(nouns)
+                    if len(sim_words) >0:
+                        for word in sim_words:
+                            negative_nouns.append(word[0])
+
+                if sim_like > sim_dislike:
+                    for ent in entities:
+                        positive_nouns.append(ent)
+                else:
+                    for ent in entities:
+                        negative_nouns.append(ent)
+                positive_complete_words.append([nouns for nouns in positive_nouns])
+                negative_complete_words.append([nouns for nouns in negative_nouns])
+            print(positive_complete_words)
+            print(negative_complete_words)
+            recommends = __get_rec__(None, positive_complete_words, negative_complete_words)
             # recommends = __get_rec__(None, __preprocessing__(sentence))
-            return  # recommends
+            return  recommends
         except Exception as e:
             print(str(e))
             return 400
@@ -645,7 +681,7 @@ def __get_suggestion_from_entity__(entities, films_IDs, films_cast, films_genres
 if __name__ == '__main__':
     preferences = list()
 
-    __get_suggestion_from_sentence__(["I hate Alessio Pagliarulo"], False)
+    __get_suggestion_from_sentence__(["I don't appreciate Alessio Pagliarulo", "I love movie without Andrea Masi"], False)
     # with open("""C:\\Users\petru\Documents\Tesi\createProfile\\the_godfather_test.csv""",  newline='', encoding="utf8") as csvfile:
     #     reader = csv.DictReader(csvfile)
     #     for row in reader:

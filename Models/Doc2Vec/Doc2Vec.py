@@ -39,7 +39,7 @@ def load_model(documents, model_name, queue=None):
     return model
 
 
-def get_recommendations_doc2vec(token_strings, documents, titles, IDs, modelDoC, most_similar, prefIDs):
+def get_recommendations_doc2vec(token_strings, documents, titles, IDs, modelDoC, most_similar, prefIDs, neg_pref):
     recommend_movies = []
     num_recommends = len(IDs)
     cos_sim_s = []
@@ -47,6 +47,7 @@ def get_recommendations_doc2vec(token_strings, documents, titles, IDs, modelDoC,
         modelDoC = load_model(documents, "Models/Doc2Vec/doc2vec_model", None)
     if most_similar:
         queries = list()
+        neg_queries = list()
         try:
             for string in token_strings:
                 new_sentence_vectorized = modelDoC.infer_vector(string, steps=100)
@@ -54,8 +55,17 @@ def get_recommendations_doc2vec(token_strings, documents, titles, IDs, modelDoC,
         except Exception:
             new_sentence_vectorized = modelDoC.infer_vector(token_strings, steps=100)
             queries.append(new_sentence_vectorized)
+
+        try:
+            for string in neg_pref:
+                neg_sentence_vectorized = modelDoC.infer_vector(string, steps=100)
+                neg_queries.append(neg_sentence_vectorized)
+        except Exception:
+            neg_sentence_vectorized = modelDoC.infer_vector(neg_pref, steps=100)
+            neg_queries.append(neg_sentence_vectorized)
+
         query = np.asarray(queries).mean(axis=0)
-        similar_sentences = modelDoC.docvecs.most_similar([query], topn=num_recommends)
+        similar_sentences = modelDoC.docvecs.most_similar([query], negative=[neg_queries], topn=num_recommends)
         rank = 1
         list_index = list()
         list_value = list()
