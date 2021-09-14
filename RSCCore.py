@@ -439,6 +439,7 @@ def __calculate_entity_bias__(IDs_pref, recommends):
     ACTOR_BIAS = 0.15
     DIRECTOR_BIAS = 0.20
     GENRE_BIAS = 0.25
+    ASPECT_BIAS = 0.17
     global __tokenized_plots__, __films_IDs__, __films_titles__, __films_cast__, __films_genres__, __films_directors__, __film_aspects__
     global __id_Model__
     mean_value = 0
@@ -448,16 +449,20 @@ def __calculate_entity_bias__(IDs_pref, recommends):
     entity_cast_pref = list()
     entity_genres_pref = list()
     entity_directors_pref = list()
+    entity_aspects_pref = list()
     for ID in IDs_pref:
         film_cast = __films_cast__[__films_IDs__.index(ID)]
         film_generes = __films_genres__[__films_IDs__.index(ID)]
         film_directors = __films_directors__[__films_IDs__.index(ID)]
+        film_aspects = __film_aspects__[__films_IDs__.index(ID)]
         for actor in film_cast:
             entity_cast_pref.append(actor)
         for genre in film_generes:
             entity_genres_pref.append(genre)
         for director in film_directors:
             entity_directors_pref.append(director)
+        for aspect in film_aspects:
+            entity_aspects_pref.append(aspect)
     recommend_movies = list()
     for i, film in enumerate(recommends):
         film_ID = film["ID"]
@@ -465,6 +470,7 @@ def __calculate_entity_bias__(IDs_pref, recommends):
         film_cast = __films_cast__[__films_IDs__.index(film_ID)]
         film_genres = __films_genres__[__films_IDs__.index(film_ID)]
         film_directors = __films_directors__[__films_IDs__.index(film_ID)]
+        film_aspects = __film_aspects__[__films_IDs__.index(film_ID)]
         if len(film_cast) > 0 and len(entity_cast_pref) > 0:
             for actor in entity_cast_pref:
                 if actor in film_cast:
@@ -480,6 +486,11 @@ def __calculate_entity_bias__(IDs_pref, recommends):
                 if genre in film_genres:
                     # print("Genere "+genre)
                     film_value += mean_value * GENRE_BIAS
+        if len(film_aspects) > 0 and len(entity_aspects_pref) > 0:
+            for aspect in entity_aspects_pref:
+                if aspect in film_aspects:
+                    # print("Aspetto "+aspect)
+                    film_value += mean_value * ASPECT_BIAS
         recommend_movies.append({"Rank": i + 1, "ID": film_ID, "Value": film_value})
     return recommend_movies
 
