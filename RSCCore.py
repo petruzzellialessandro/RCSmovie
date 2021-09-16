@@ -2,13 +2,12 @@ import csv
 import queue
 import sys
 import threading
-from idlelib import query
 
 import gensim.parsing.preprocessing as __pp__
 import numpy
 import pandas as pd
 import spacy
-from scipy.spatial import distance
+
 
 import Models.Doc2Vec.Doc2Vec as __d2v__
 import Models.FastText.FastText as __ft__
