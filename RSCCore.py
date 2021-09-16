@@ -703,7 +703,7 @@ def __get_suggestion_from_entity__(entities, films_IDs, films_cast, films_genres
     for i, ID in enumerate(films_IDs):
         sim_value = film_values[i]
         films_entities = numpy.concatenate((films_cast[i], films_genres[i], films_directors[i]))
-        for entity in films_entities[i]:
+        for entity in films_entities:
             if entity in entities:
                 sim_value += film_values[i] * 0.4
             if entity in neg_entities:
