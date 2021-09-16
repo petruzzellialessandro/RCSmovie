@@ -50,10 +50,10 @@ def get_recommendations_doc2vec(token_strings, documents, titles, IDs, modelDoC,
         neg_queries = list()
         try:
             for string in token_strings:
-                new_sentence_vectorized = modelDoC.infer_vector(string, steps=100)
+                new_sentence_vectorized = modelDoC.infer_vector(string)
                 queries.append(new_sentence_vectorized)
         except Exception:
-            new_sentence_vectorized = modelDoC.infer_vector(token_strings, steps=100)
+            new_sentence_vectorized = modelDoC.infer_vector(token_strings)
             queries.append(new_sentence_vectorized)
 
         query = np.asarray(queries).mean(axis=0)
