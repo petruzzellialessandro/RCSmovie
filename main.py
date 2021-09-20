@@ -19,10 +19,10 @@ def get_suggestions():
                                               movie_to_ignore=content_dir["movietoIgnore"],
                                               negative_entity=content_dir["negativeEntity"],
                                               rec_list_size= content_dir["recListSize"])
-        print("book", content_dir["movies"])
-        print("bookIGNORE", content_dir["movietoIgnore"])
-        print("entities", content_dir["entities"])
-        print("negativeEntity", content_dir["negativeEntity"])
+        #print("book", content_dir["movies"])
+        #print("bookIGNORE", content_dir["movietoIgnore"])
+        #print("entities", content_dir["entities"])
+        #print("negativeEntity", content_dir["negativeEntity"])
         return jsonify(results=suggestions)
        # except Exception:
             #suggestions = "Format Error"
